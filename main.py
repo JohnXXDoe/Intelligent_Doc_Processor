@@ -5,7 +5,7 @@ from PIL import Image
 import PyPDF2  # Convert text PDF to text
 import cv2
 
-PDF_file = r"C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf"
+PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf'
 #print(len(PDF_file))
 # pages = convert_from_path(PDF_file, 500, poppler_path=r"C:\poppler-21.09.0\Library\bin", first_page=22, last_page=27, timeout=10000)
 #
@@ -29,13 +29,12 @@ PDF_file = r"C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf"
 #     # Increment the counter to update filename
 #     image_counter = image_counter + 1
 
-img_loc = 'C:/Users/33669/PycharmProjects/OCR/pdf2img/4.png'
-model = r'C:\Users\33669\PycharmProjects\OCR\classification\Lib\site-packages\easyocr\model\english_g2.pth'
+img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_2.jpg'
 image = cv2.imread(img_loc)
-reader = easyocr.Reader(['en'], model_storage_directory=model)  # this needs to run only once to load the model into memory
-result = reader.readtext(img_loc, paragraph=False, mag_ratio=2, y_ths=0.05, x_ths=1.5, width_ths=1.5)#, rotation_info=[90, 180, 270]
+reader = easyocr.Reader(['en'],  recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
+result = reader.readtext(img_loc, paragraph=False, mag_ratio=1.0, y_ths=0.05, x_ths=1.5, width_ths=1.5)#, rotation_info=[90, 180, 270]
 cv2.startWindowThread()
-for (bbox, text, prob) in result:
+for (bbox, text, prob) in result:#, prob
     # display the OCR'd text and associated probability
     # print("[INFO] {:.4f}: {}".format(prob, text))
     print(text)
@@ -51,8 +50,8 @@ for (bbox, text, prob) in result:
     cv2.putText(image, text, (tl[0], tl[1] - 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 90, 200), 8)
 
-file = open("OCR_OUT.txt", "a")
-for (bbox, text, prob) in result:
+file = open("OCR_OUT2.txt", 'w')
+for (bbox, text, prob) in result:#, prob
     file.write(str(text))
     file.write('\n')
 file.close()

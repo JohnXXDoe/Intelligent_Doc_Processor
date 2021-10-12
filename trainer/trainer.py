@@ -4,6 +4,9 @@ import yaml
 from train import train
 from utils import AttrDict
 import pandas as pd
+from PIL import Image
+import pytesseract
+pytesseract.pytesseract.tesseract_cmd = r'C:\Users\33669\tesseract\tesseract.exe'
 
 cudnn.benchmark = True
 cudnn.deterministic = False
@@ -20,7 +23,7 @@ def get_config(file_path):
             all_char = ''.join(df['words'])
             characters += ''.join(set(all_char))
         characters = sorted(set(characters))
-        opt.character= ''.join(characters)
+        opt.character = ''.join(characters)
     else:
         opt.character = opt.number + opt.symbol + opt.lang_char
     os.makedirs(f'./saved_models/{opt.experiment_name}', exist_ok=True)
@@ -28,3 +31,12 @@ def get_config(file_path):
 if __name__ == '__main__':
     opt = get_config("config_files/en_filtered_config.yaml")
     train(opt, amp=False)
+
+
+r'''
+file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_3.jpg'
+pdf = pytesseract.image_to_pdf_or_hocr(file, config='--oem 1', extension='pdf')
+print(pytesseract.image_to_string(file))
+with open('ocr1.pdf', 'w+b') as f:
+    f.write(pdf)
+'''

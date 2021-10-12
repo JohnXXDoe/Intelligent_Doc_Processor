@@ -15,7 +15,9 @@ from utils import CTCLabelConverter, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
 from model import Model
 from test import validation
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 def count_parameters(model):
     print("Modules, Parameters")
@@ -23,13 +25,14 @@ def count_parameters(model):
     for name, parameter in model.named_parameters():
         if not parameter.requires_grad: continue
         param = parameter.numel()
-        #table.add_row([name, param])
-        total_params+=param
+        # table.add_row([name, param])
+        total_params += param
         print(name, param)
     print(f"Total Trainable Params: {total_params}")
     return total_params
 
-def train(opt, show_number = 2, amp=False):
+
+def train(opt, show_number=2, amp=False):
     """ dataset preparation """
     if not opt.data_filtering_off:
         print('Filtering the images containing characters which are not in opt.character')
@@ -40,7 +43,8 @@ def train(opt, show_number = 2, amp=False):
     train_dataset = Batch_Balanced_Dataset(opt)
 
     log = open(f'./saved_models/{opt.experiment_name}/log_dataset.txt', 'a', encoding="utf8")
-    AlignCollate_valid = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD, contrast_adjust=opt.contrast_adjust)
+    AlignCollate_valid = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD,
+                                      contrast_adjust=opt.contrast_adjust)
     valid_dataset, valid_dataset_log = hierarchical_dataset(root=opt.valid_data, opt=opt)
     valid_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=min(32, opt.batch_size),
@@ -51,7 +55,7 @@ def train(opt, show_number = 2, amp=False):
     print('-' * 80)
     log.write('-' * 80 + '\n')
     log.close()
-    
+
     """ model configuration """
     if 'CTC' in opt.Prediction:
         converter = CTCLabelConverter(opt.character)
@@ -69,22 +73,23 @@ def train(opt, show_number = 2, amp=False):
     if opt.saved_model != '':
         pretrained_dict = torch.load(opt.saved_model)
         if opt.new_prediction:
-            model.Prediction = nn.Linear(model.SequenceModeling_output, len(pretrained_dict['module.Prediction.weight']))  
-        
-        model = torch.nn.DataParallel(model).to(device) 
+            model.Prediction = nn.Linear(model.SequenceModeling_output,
+                                         len(pretrained_dict['module.Prediction.weight']))
+
+        model = torch.nn.DataParallel(model).to(device)
         print(f'loading pretrained model from {opt.saved_model}')
         if opt.FT:
             model.load_state_dict(pretrained_dict, strict=False)
         else:
             model.load_state_dict(pretrained_dict)
         if opt.new_prediction:
-            model.module.Prediction = nn.Linear(model.module.SequenceModeling_output, opt.num_class)  
+            model.module.Prediction = nn.Linear(model.module.SequenceModeling_output, opt.num_class)
             for name, param in model.module.Prediction.named_parameters():
                 if 'bias' in name:
                     init.constant_(param, 0.0)
                 elif 'weight' in name:
                     init.kaiming_normal_(param)
-            model = model.to(device) 
+            model = model.to(device)
     else:
         # weight initialization
         for name, param in model.named_parameters():
@@ -101,12 +106,12 @@ def train(opt, show_number = 2, amp=False):
                     param.data.fill_(1)
                 continue
         model = torch.nn.DataParallel(model).to(device)
-    
-    model.train() 
+
+    model.train()
     print("Model:")
     print(model)
     count_parameters(model)
-    
+
     """ setup loss """
     if 'CTC' in opt.Prediction:
         criterion = torch.nn.CTCLoss(zero_infinity=True).to(device)
@@ -125,7 +130,7 @@ def train(opt, show_number = 2, amp=False):
                 param.requires_grad = False
     except:
         pass
-    
+
     # filter that only require gradient decent
     filtered_parameters = []
     params_num = []
@@ -136,8 +141,8 @@ def train(opt, show_number = 2, amp=False):
     # [print(name, p.numel()) for name, p in filter(lambda p: p[1].requires_grad, model.named_parameters())]
 
     # setup optimizer
-    if opt.optim=='adam':
-        #optimizer = optim.Adam(filtered_parameters, lr=opt.lr, betas=(opt.beta1, 0.999))
+    if opt.optim == 'adam':
+        # optimizer = optim.Adam(filtered_parameters, lr=opt.lr, betas=(opt.beta1, 0.999))
         optimizer = optim.Adam(filtered_parameters)
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
@@ -170,12 +175,12 @@ def train(opt, show_number = 2, amp=False):
     i = start_iter
 
     scaler = GradScaler()
-    t1= time.time()
-        
-    while(True):
+    t1 = time.time()
+
+    while (True):
         # train part
         optimizer.zero_grad(set_to_none=True)
-        
+
         if amp:
             with autocast():
                 image_tensors, labels = train_dataset.get_batch()
@@ -216,20 +221,21 @@ def train(opt, show_number = 2, amp=False):
                 target = text[:, 1:]  # without [GO] Symbol
                 cost = criterion(preds.view(-1, preds.shape[-1]), target.contiguous().view(-1))
             cost.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip) 
+            torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
             optimizer.step()
         loss_avg.add(cost)
-
+        print('////////////////////////////////// Training epoch number: ' + str(
+            i) + r' \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\')
         # validation part
-        if (i % opt.valInterval == 0) and (i!=0):
-            print('training time: ', time.time()-t1)
-            t1=time.time()
+        if (i % opt.valInterval == 0) and (i != 0):
+            print('training time: ', time.time() - t1)
+            t1 = time.time()
             elapsed_time = time.time() - start_time
             # for log
             with open(f'./saved_models/{opt.experiment_name}/log_train.txt', 'a', encoding="utf8") as log:
                 model.eval()
                 with torch.no_grad():
-                    valid_loss, current_accuracy, current_norm_ED, preds, confidence_score, labels,\
+                    valid_loss, current_accuracy, current_norm_ED, preds, confidence_score, labels, \
                     infer_time, length_of_data = validation(model, criterion, valid_loader, converter, opt, device)
                 model.train()
 
@@ -256,11 +262,12 @@ def train(opt, show_number = 2, amp=False):
                 dashed_line = '-' * 80
                 head = f'{"Ground Truth":25s} | {"Prediction":25s} | Confidence Score & T/F'
                 predicted_result_log = f'{dashed_line}\n{head}\n{dashed_line}\n'
-                
-                #show_number = min(show_number, len(labels))
-                
-                start = random.randint(0,len(labels) - show_number )    
-                for gt, pred, confidence in zip(labels[start:start+show_number], preds[start:start+show_number], confidence_score[start:start+show_number]):
+
+                # show_number = min(show_number, len(labels))
+
+                start = random.randint(0, len(labels) - show_number)
+                for gt, pred, confidence in zip(labels[start:start + show_number], preds[start:start + show_number],
+                                                confidence_score[start:start + show_number]):
                     if 'Attn' in opt.Prediction:
                         gt = gt[:gt.find('[s]')]
                         pred = pred[:pred.find('[s]')]
@@ -269,12 +276,12 @@ def train(opt, show_number = 2, amp=False):
                 predicted_result_log += f'{dashed_line}'
                 print(predicted_result_log)
                 log.write(predicted_result_log + '\n')
-                print('validation time: ', time.time()-t1)
-                t1=time.time()
+                print('validation time: ', time.time() - t1)
+                t1 = time.time()
         # save model per 1e+4 iter.
         if (i + 1) % 1e+4 == 0:
             torch.save(
-                model.state_dict(), f'./saved_models/{opt.experiment_name}/iter_{i+1}.pth')
+                model.state_dict(), f'./saved_models/{opt.experiment_name}/iter_{i + 1}.pth')
 
         if i == opt.num_iter:
             print('end the training')
