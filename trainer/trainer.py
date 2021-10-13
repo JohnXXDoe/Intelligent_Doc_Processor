@@ -37,6 +37,6 @@ r'''
 file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_3.jpg'
 pdf = pytesseract.image_to_pdf_or_hocr(file, config='--oem 1', extension='pdf')
 print(pytesseract.image_to_string(file))
-with open('ocr1.pdf', 'w+b') as f:
+with open('C:\Users\33669\PycharmProjects\OCR\pdf2img\out_ocr1.pdf', 'w+b') as f:
     f.write(pdf)
 '''

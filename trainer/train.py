@@ -71,7 +71,7 @@ def train(opt, show_number=2, amp=False):
           opt.SequenceModeling, opt.Prediction)
 
     if opt.saved_model != '':
-        pretrained_dict = torch.load(opt.saved_model)
+        pretrained_dict = torch.load(opt.saved_model, map_location ='cpu')
         if opt.new_prediction:
             model.Prediction = nn.Linear(model.SequenceModeling_output,
                                          len(pretrained_dict['module.Prediction.weight']))
@@ -179,6 +179,7 @@ def train(opt, show_number=2, amp=False):
 
     while (True):
         # train part
+        t3 = time.time()
         optimizer.zero_grad(set_to_none=True)
 
         if amp:
@@ -224,8 +225,9 @@ def train(opt, show_number=2, amp=False):
             torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
             optimizer.step()
         loss_avg.add(cost)
-        print('////////////////////////////////// Training epoch number: ' + str(
-            i) + r' \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\')
+        t4 = time.time()
+        print(f'//////////////////////////////////// Training epoch number: {i+1}' + r' \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\')
+        print(f'|||||||||||||||| Epoch train time: {t4-t3} seconds ||||||||||||||||')
         # validation part
         if (i % opt.valInterval == 0) and (i != 0):
             print('training time: ', time.time() - t1)
@@ -279,7 +281,9 @@ def train(opt, show_number=2, amp=False):
                 print('validation time: ', time.time() - t1)
                 t1 = time.time()
         # save model per 1e+4 iter.
-        if (i + 1) % 1e+4 == 0:
+        if (i + 1) % 3000 == 0:
+            print(f'//////////////////////////////////// Saving model iteration : {i + 1} ' + str(
+                i) + r' \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\')
             torch.save(
                 model.state_dict(), f'./saved_models/{opt.experiment_name}/iter_{i + 1}.pth')
 

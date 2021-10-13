@@ -29,10 +29,10 @@ PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf'
 #     # Increment the counter to update filename
 #     image_counter = image_counter + 1
 
-img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_2.jpg'
+img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_3.jpg'
 image = cv2.imread(img_loc)
 reader = easyocr.Reader(['en'],  recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
-result = reader.readtext(img_loc, paragraph=False, mag_ratio=1.0, y_ths=0.05, x_ths=1.5, width_ths=1.5)#, rotation_info=[90, 180, 270]
+result = reader.readtext(img_loc, paragraph=False)#, rotation_info=[90, 180, 270] , mag_ratio=1.0, y_ths=0.05, x_ths=1.5, width_ths=1.5
 cv2.startWindowThread()
 for (bbox, text, prob) in result:#, prob
     # display the OCR'd text and associated probability
