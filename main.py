@@ -32,9 +32,9 @@ PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf'
 img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_3.jpg'
 image = cv2.imread(img_loc)
 reader = easyocr.Reader(['en'],  recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
-result = reader.readtext(img_loc, paragraph=False)#, rotation_info=[90, 180, 270] , mag_ratio=1.0, y_ths=0.05, x_ths=1.5, width_ths=1.5
+result = reader.readtext(img_loc, paragraph=True)#, rotation_info=[90, 180, 270] , mag_ratio=1.0, y_ths=0.05, x_ths=1.5, width_ths=1.5
 cv2.startWindowThread()
-for (bbox, text, prob) in result:#, prob
+for (bbox, text) in result:#, prob
     # display the OCR'd text and associated probability
     # print("[INFO] {:.4f}: {}".format(prob, text))
     print(text)
@@ -51,7 +51,7 @@ for (bbox, text, prob) in result:#, prob
                 cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 90, 200), 8)
 
 file = open("OCR_OUT2.txt", 'w')
-for (bbox, text, prob) in result:#, prob
+for (bbox, text) in result:#, prob
     file.write(str(text))
     file.write('\n')
 file.close()
