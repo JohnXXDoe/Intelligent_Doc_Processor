@@ -281,7 +281,7 @@ def train(opt, show_number=2, amp=False):
                 print('validation time: ', time.time() - t1)
                 t1 = time.time()
         # save model per 1e+4 iter.
-        if (i + 1) % 3000 == 0:
+        if (i + 1) % 100 == 0:
             print(f'//////////////////////////////////// Saving model iteration : {i + 1} ' + str(
                 i) + r' \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\')
             torch.save(

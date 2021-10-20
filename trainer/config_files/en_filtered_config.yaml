@@ -2,17 +2,17 @@ number: '0123456789'
 symbol: "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ €"
 lang_char: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 experiment_name: 'en_filtered'
-train_data: 'all_data'
-valid_data: 'all_data'
+train_data: 'all_data/extra_training'
+valid_data: 'all_data/valid'
 manualSeed: 1111
 workers: 6
 batch_size: 32 #32
-num_iter: 300000
-valInterval: 20000
-saved_model: '' #'saved_models/en_filtered/iter_300000.pth'
+num_iter: 20000
+valInterval: 100
+saved_model: 'saved_models/en_filtered/iter_9000.pth' #'saved_models/en_filtered/iter_300000.pth'
 FT: False
 optim: False # default is Adadelta
-lr: 1.
+lr: 0.4
 beta1: 0.9
 rho: 0.95
 eps: 0.00000001
@@ -21,11 +21,11 @@ grad_clip: 5
 select_data: 'v011_words' # this is dataset folder in train_data
 batch_ratio: '1' 
 total_data_usage_ratio: 1.0
-batch_max_length: 34 
+batch_max_length: 80 
 imgH: 64
 imgW: 600
 rgb: False
-contrast_adjust: False
+contrast_adjust: True
 sensitive: True
 PAD: True
 contrast_adjust: 0.0
