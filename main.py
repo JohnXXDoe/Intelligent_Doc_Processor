@@ -2,9 +2,11 @@ import easyocr
 import pdf2image
 from pdf2image import convert_from_path  # For scanned PDFs
 from PIL import Image
-import PyPDF2  # Convert text PDF to text
+from pdfminer import high_level # Convert text PDF to text
 import cv2
 import pytesseract
+from pdfminer.layout import LAParams
+
 
 def pdf2img(PDF):
     # print(len(PDF))
@@ -31,13 +33,15 @@ def pdf2img(PDF):
         # Increment the counter to update filename
         image_counter = image_counter + 1
 
-def searchable_ocr(img):
+
+def searchable_ocr(img):  # From image to searchable PDF
     pdf = pytesseract.image_to_pdf_or_hocr(img, config='--oem 1', extension='pdf')
     print(pytesseract.image_to_string(img))
-    with open(r'C:\Users\33669\PycharmProjects\OCR\outputs\out_ocr1.pdf', 'w+b') as f:
+    with open(r'C:\Users\33669\PycharmProjects\OCR\outputs\Searchable.pdf', 'w+b') as f:
         f.write(pdf)
 
-def img_ocr(loc):
+
+def img_ocr(loc):  # For Image/Scanned PDF to text
     image = cv2.imread(loc)
     reader = easyocr.Reader(['en'],
                             recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
@@ -60,7 +64,7 @@ def img_ocr(loc):
         cv2.putText(image, text, (tl[0], tl[1] - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 90, 200), 8)
 
-    file = open(r"C:\Users\33669\PycharmProjects\OCR\outputs\OCR_OUT2.txt", 'w')
+    file = open(r"C:\Users\33669\PycharmProjects\OCR\outputs\OCR_OUT.txt", 'w')
     for (bbox, text) in result:  # , prob
         file.write(str(text))
         file.write('\n')
@@ -71,9 +75,18 @@ def img_ocr(loc):
     cv2.waitKey(0)
 
 
+def text_pdf(pdf):  # For PDF that is in text selectable format char_margin=0.5, line_margin=50, boxes_flow=1.0
+    text = high_level.extract_text(pdf, maxpages=5, laparams=LAParams(char_margin=30, line_margin=2, boxes_flow=-0.5))
+    print(text)
+    file = open(r"C:\Users\33669\PycharmProjects\OCR\outputs\Tender_Text1.txt", 'w')
+    file.write(str(text))
+    file.close()
+
+
 if __name__ == '__main__':
     PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf'
-    img_loc = r'C:\Users\33669\PycharmProjects\OCR\K2.jpg'
-    img_ocr(img_loc)
+    img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
+    # img_ocr(img_loc)
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
+    text_pdf(PDF_file)
