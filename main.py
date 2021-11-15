@@ -75,8 +75,8 @@ def img_ocr(loc):  # For Image/Scanned PDF to text
     cv2.waitKey(0)
 
 
-def text_pdf(pdf):  # For PDF that is in text selectable format char_margin=0.5, line_margin=50, boxes_flow=1.0
-    text = high_level.extract_text(pdf, maxpages=5, laparams=LAParams(char_margin=30, line_margin=2, boxes_flow=-0.5))
+def text_pdf(pdf):  # For PDF that is in text selectable formatchar_margin=30, line_margin=2, boxes_flow=1
+    text = high_level.extract_text(pdf, maxpages=15, laparams=LAParams(char_margin=30, line_margin=2, boxes_flow=1))
     print(text)
     file = open(r"C:\Users\33669\PycharmProjects\OCR\outputs\Tender_Text1.txt", 'w')
     file.write(str(text))
@@ -84,9 +84,10 @@ def text_pdf(pdf):  # For PDF that is in text selectable format char_margin=0.5,
 
 
 if __name__ == '__main__':
-    PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\test.pdf'
+    PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\scannedpdf.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
     # img_ocr(img_loc)
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
     text_pdf(PDF_file)
+
