@@ -1,12 +1,19 @@
+import csv
+
 import easyocr
 import pdf2image
 from pdf2image import convert_from_path  # For scanned PDFs
 from PIL import Image
 from pdfminer import high_level # Convert text PDF to text
+from pdfminer import pdfpage
 import cv2
 import pytesseract
+from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
-
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from io import StringIO
+import nltk
+#nltk.download('punkt')
 
 def pdf2img(PDF):
     # print(len(PDF))
@@ -75,16 +82,37 @@ def img_ocr(loc):  # For Image/Scanned PDF to text
     cv2.waitKey(0)
 
 
-def text_pdf(pdf):  # For PDF that is in text selectable formatchar_margin=30, line_margin=2, boxes_flow=1
-    text = high_level.extract_text(pdf, maxpages=15, laparams=LAParams(char_margin=30, line_margin=2, boxes_flow=1))
-    print(text)
-    file = open(r"C:\Users\33669\PycharmProjects\OCR\outputs\Tender_Text1.txt", 'w')
-    file.write(str(text))
-    file.close()
+def text_pdf(pdf):  # For PDF that is in text selectable format char_margin=30, line_margin=2, boxes_flow=1
+    rsrcmgr = PDFResourceManager()
+    retstr = StringIO()
+    codec = 'utf-8'
+    laparams = LAParams(char_margin=30, line_margin=2, boxes_flow=1)
+    device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    caching = True
+    pagenos = set()
+    fp = open(pdf, 'rb')
+    writer = csv.writer(open(r"H:\Code\Doc_IMG-OCR\Tender_Text1.csv", 'w', newline=''))
+    #file = open(r"H:\Code\Doc_IMG-OCR\Tender_Text1.txt", 'a')
+    #file.truncate(0)
+    for pagenumber, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
+        print(pagenumber)
+        if pagenumber == 150:
+            interpreter.process_page(page)
+            data = retstr.getvalue()
+            sent_text = nltk.sent_tokenize(data)
+            for sentence in sent_text:
+                tokenized_text = nltk.word_tokenize(sentence)
+                print(tokenized_text)
+                for word in tokenized_text:
+                    writer.writerow([word])
+                writer.writerow('\n')
+                #file.write(str(tokenized_text))
+    #file.close()
 
 
 if __name__ == '__main__':
-    PDF_file = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\scannedpdf.pdf'
+    PDF_file = r'H:\Code\Data\EIL Specs.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
     # img_ocr(img_loc)
     # pdf2img(PDF_file)
