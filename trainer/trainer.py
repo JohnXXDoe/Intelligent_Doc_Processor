@@ -14,7 +14,8 @@ import tempfile
 #For Flair
 import flair
 import torch
-from flair import set_seed
+from flair.data import Corpus
+from flair.datasets import ColumnCorpus
 from flair.embeddings import TransformerWordEmbeddings
 from flair.models import SequenceTagger
 from flair.trainers import ModelTrainer
@@ -27,6 +28,7 @@ from dataclasses import dataclass, field
 from transformers import HfArgumentParser
 logger = logging.getLogger("flair")
 logger.setLevel(level="INFO")
+
 
 #pytesseract.pytesseract.tesseract_cmd = r'C:\Users\33669\tesseract\tesseract.exe'
 cudnn.benchmark = True
@@ -155,73 +157,52 @@ def get_flair_corpus(data_args):
     return ner_task_mapping[dataset_name](**dataset_args)
 
 def flair_ner():
-    parser = HfArgumentParser(
-        (ModelArguments, TrainingArguments, FlertArguments, DataArguments)
-    )
 
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        (
-            model_args,
-            training_args,
-            flert_args,
-            data_args,
-        ) = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
-    else:
-        (
-            model_args,
-            training_args,
-            flert_args,
-            data_args,
-        ) = parser.parse_args_into_dataclasses()
 
-    set_seed(training_args.seed)
+    # define columns
+    columns = {0: 'text', 1: 'ner'}
 
-    flair.device = training_args.device
+    # this is the folder in which train, test and dev files reside
+    data_folder = r'H:\Code\Doc_IMG-OCR\trainer\ner'
 
-    corpus = get_flair_corpus(data_args)
+    # init a corpus using column format, data folder and the names of the train, dev and test files
+    corpus: Corpus = ColumnCorpus(data_folder, columns,
+                                  train_file='train.txt')
 
-    logger.info(corpus)
+    # 2. what label do we want to predict?
+    label_type = 'ner'
 
-    tag_type: str = "ner"
-    tag_dictionary = corpus.make_label_dictionary(tag_type)
-    logger.info(tag_dictionary)
+    # 3. make the label dictionary from the corpus
+    label_dict = corpus.make_label_dictionary(label_type=label_type)
+    print(label_dict)
 
-    embeddings = TransformerWordEmbeddings(
-        model=model_args.model_name_or_path,
-        layers=model_args.layers,
-        subtoken_pooling=model_args.subtoken_pooling,
-        fine_tune=True,
-        use_context=flert_args.context_size,
-        respect_document_boundaries=flert_args.respect_document_boundaries,
-    )
+    # 4. initialize fine-tuneable transformer embeddings WITH document context
+    embeddings = TransformerWordEmbeddings(model='xlm-roberta-base',
+                                           layers="-1,-2",
+                                           subtoken_pooling="first",
+                                           fine_tune=True,
+                                           use_context=True,
+                                           )
 
-    tagger = SequenceTagger(
-        hidden_size=model_args.hidden_size,
-        embeddings=embeddings,
-        tag_dictionary=tag_dictionary,
-        tag_type=tag_type,
-        use_crf=model_args.use_crf,
-        use_rnn=False,
-        reproject_embeddings=False,
-    )
+    # 5. initialize bare-bones sequence tagger (no CRF, no RNN, no reprojection)
+    tagger = SequenceTagger(hidden_size=256,
+                            embeddings=embeddings,
+                            tag_dictionary=label_dict,
+                            tag_type='ner',
+                            use_crf=False,
+                            use_rnn=False,
+                            reproject_embeddings=False,
+                            )
 
+    # 6. initialize trainer
     trainer = ModelTrainer(tagger, corpus)
 
-    trainer.fine_tune(data_args.output_dir,
-                      learning_rate=training_args.learning_rate,
-                      mini_batch_size=training_args.batch_size,
-                      mini_batch_chunk_size=training_args.mini_batch_chunk_size,
-                      max_epochs=training_args.num_epochs,
-                      embeddings_storage_mode=training_args.embeddings_storage_mode,
-                      weight_decay=training_args.weight_decay,
+    # 7. run fine-tuning
+    trainer.fine_tune('resources/taggers/ner-flert',
+                      learning_rate=5.0e-6,
+                      mini_batch_size=4,
+                      mini_batch_chunk_size=1,  # remove this parameter to speed up computation if you have a big GPU
                       )
-
-    torch.save(model_args, os.path.join(data_args.output_dir, "model_args.bin"))
-    torch.save(training_args, os.path.join(data_args.output_dir, "training_args.bin"))
-
-    # finally, print model card for information
-    tagger.print_model_card()
-
 
 if __name__ == '__main__':
     #opt = get_config("config_files/en_filtered_config.yaml")

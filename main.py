@@ -1,6 +1,9 @@
+import csv
+
 import easyocr
-from flair.data import Sentence
 from pdf2image import convert_from_path  # For scanned PDFs
+from PIL import Image
+from pdfminer import high_level # Convert text PDF to text
 from pdfminer import pdfpage
 import cv2
 import pytesseract
@@ -180,8 +183,9 @@ def test_html_rendering():
 
 if __name__ == '__main__':
     pdfname = 'EIL Specs'
-    PDF_file = f'C:/Users/33669/PycharmProjects/OCR/trainer/ner_data/raw/{pdfname}.pdf'
-    img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_1.png'
+    PDF_file = r'H:\Code\Data\EIL Specs.pdf'
+    img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
+    filename = 'PGCIL'
     # img_ocr(img_loc)
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
