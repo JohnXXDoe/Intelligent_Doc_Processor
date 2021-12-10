@@ -1,10 +1,6 @@
-import csv
-
 import easyocr
-import pdf2image
+from flair.data import Sentence
 from pdf2image import convert_from_path  # For scanned PDFs
-from PIL import Image
-from pdfminer import high_level # Convert text PDF to text
 from pdfminer import pdfpage
 import cv2
 import pytesseract
@@ -12,8 +8,17 @@ from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from io import StringIO
-import nltk
-#nltk.download('punkt')
+from flair.models import SequenceTagger
+from flair.tokenization import SegtokSentenceSplitter
+
+from unittest.mock import MagicMock
+from flair.data import Sentence, Span, Token
+from flair.visual import *
+from flair.visual.ner_html import render_ner_html, HTML_PAGE, TAGGED_ENTITY, PARAGRAPH
+import tempfile
+import webbrowser
+
+
 
 def pdf2img(PDF):
     # print(len(PDF))
@@ -82,40 +87,103 @@ def img_ocr(loc):  # For Image/Scanned PDF to text
     cv2.waitKey(0)
 
 
-def text_pdf(pdf):  # For PDF that is in text selectable format char_margin=30, line_margin=2, boxes_flow=1
+def ner(pdf):
+    sentences = []
+    tagger = SequenceTagger.load(
+        r'C:\Users\33669\PycharmProjects\OCR\trainer\resources\taggers\flair-embd\final-model.pt')
+    print(tagger)
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
     codec = 'utf-8'
     laparams = LAParams(char_margin=30, line_margin=2, boxes_flow=1)
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
     interpreter = PDFPageInterpreter(rsrcmgr, device)
-    caching = True
-    pagenos = set()
+    rawdata = []
     fp = open(pdf, 'rb')
-    writer = csv.writer(open(r"H:\Code\Doc_IMG-OCR\Tender_Text1.csv", 'w', newline=''))
-    #file = open(r"H:\Code\Doc_IMG-OCR\Tender_Text1.txt", 'a')
-    #file.truncate(0)
+
     for pagenumber, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        print(pagenumber)
-        if pagenumber == 150:
+        # print(pagenumber)
+        if pagenumber:
             interpreter.process_page(page)
             data = retstr.getvalue()
-            sent_text = nltk.sent_tokenize(data)
-            for sentence in sent_text:
-                tokenized_text = nltk.word_tokenize(sentence)
-                print(tokenized_text)
-                for word in tokenized_text:
-                    writer.writerow([word])
-                writer.writerow('\n')
-                #file.write(str(tokenized_text))
-    #file.close()
+            # cleansent = clean(sent)
+            encoded_string = data.encode("ascii", "ignore")
+            cleanpage = encoded_string.decode()
+            splitter = SegtokSentenceSplitter()
+            sentences = splitter.split(cleanpage)
+            tagger.predict(sentences)
+            for sentence in sentences:
+                print(sentence.to_tagged_string())
+    colors = {
+        "default": "#F7FF53",
+        "O": "#ddd",
+    }
+    actual = render_ner_html(sentences, colors=colors)
+    with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as f:
+        url = 'file://' + f.name
+        f.write(actual)
+    webbrowser.open(url)
+
+def mock_ner_span(text, tag, start, end):
+    span = Span([]).set_label('class', tag)
+    span.start_pos = start
+    span.end_pos = end
+    span.tokens = [Token(text[start:end])]
+    return span
+
+
+def test_html_rendering():
+    text = (
+        "Boris Johnson has been elected new Conservative leader in a ballot of party members and will become the "
+        "next UK prime minister. &"
+    )
+    sent = Sentence()
+    sent.get_spans = MagicMock()
+    sent.get_spans.return_value = [
+        mock_ner_span(text, "PER", 0, 13),
+        mock_ner_span(text, "MISC", 35, 47),
+        mock_ner_span(text, "LOC", 109, 111),
+    ]
+    sent.to_original_text = MagicMock()
+    sent.to_original_text.return_value = text
+    colors = {
+        "PER": "#F7FF53",
+        "ORG": "#E8902E",
+        "LOC": "yellow",
+        "MISC": "#4647EB",
+        "O": "#ddd",
+    }
+    actual = render_ner_html([sent], colors=colors)
+
+    expected_res = HTML_PAGE.format(
+        text=PARAGRAPH.format(
+            sentence=TAGGED_ENTITY.format(
+                color="#F7FF53", entity="Boris Johnson", label="PER"
+            )
+                     + " has been elected new "
+                     + TAGGED_ENTITY.format(color="#4647EB", entity="Conservative", label="MISC")
+                     + " leader in a ballot of party members and will become the next "
+                     + TAGGED_ENTITY.format(color="yellow", entity="UK", label="LOC")
+                     + " prime minister. &amp;"
+        ),
+        title="Flair",
+    )
+
+    html = actual
+
+    with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as f:
+        url = 'file://' + f.name
+        f.write(html)
+    webbrowser.open(url)
+    assert expected_res == actual
 
 
 if __name__ == '__main__':
-    PDF_file = r'H:\Code\Data\EIL Specs.pdf'
-    img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
+    pdfname = 'EIL Specs'
+    PDF_file = f'C:/Users/33669/PycharmProjects/OCR/trainer/ner_data/raw/{pdfname}.pdf'
+    img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\page_1.png'
     # img_ocr(img_loc)
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
-    text_pdf(PDF_file)
-
+    ner(PDF_file)
+    #test_html_rendering()
