@@ -11,12 +11,12 @@ from spacy import displacy
 import webbrowser
 import tempfile
 
-#For Flair
+# For Flair
 import flair
 import torch
 from flair.data import Corpus
 from flair.datasets import ColumnCorpus
-from flair.embeddings import TransformerWordEmbeddings
+from flair.embeddings import TransformerWordEmbeddings, WordEmbeddings, FlairEmbeddings, StackedEmbeddings
 from flair.models import SequenceTagger
 from flair.trainers import ModelTrainer
 import logging
@@ -26,13 +26,14 @@ import os
 import sys
 from dataclasses import dataclass, field
 from transformers import HfArgumentParser
+
 logger = logging.getLogger("flair")
 logger.setLevel(level="INFO")
 
-
-#pytesseract.pytesseract.tesseract_cmd = r'C:\Users\33669\tesseract\tesseract.exe'
+# pytesseract.pytesseract.tesseract_cmd = r'C:\Users\33669\tesseract\tesseract.exe'
 cudnn.benchmark = True
 cudnn.deterministic = False
+
 
 def get_config(file_path):
     with open(file_path, 'r', encoding="utf8") as stream:
@@ -42,7 +43,8 @@ def get_config(file_path):
         characters = ''
         for data in opt['select_data'].split('-'):
             csv_path = os.path.join(opt['train_data'], data, 'labels.csv')
-            df = pd.read_csv(csv_path, sep='^([^,]+),', engine='python', usecols=['filename', 'words'], keep_default_na=False)
+            df = pd.read_csv(csv_path, sep='^([^,]+),', engine='python', usecols=['filename', 'words'],
+                             keep_default_na=False)
             all_char = ''.join(df['words'])
             characters += ''.join(set(all_char))
         characters = sorted(set(characters))
@@ -52,10 +54,11 @@ def get_config(file_path):
     os.makedirs(f'./saved_models/{opt.experiment_name}', exist_ok=True)
     return opt
 
-def train_ner():
 
+def train_ner():
     nlp = spacy.load("en_core_web_trf", disable=["tagger", "parser", "attribute_ruler", "lemmatizer"])
-    doc = nlp(r"12.0 Cr was given to the company in compensation. In the period April 1 to September 20, 12.47 lakh cases of ticketless/irregular travellers were detected in suburban and non-suburban trains (long-distance trains) and an amount of `71.25 crore was realised as penalty. This is highest in terms of revenue among all zonal railways,” CR’s Chief Public Relations Officer Shivaji Sutar said.")
+    doc = nlp(
+        r"12.0 Cr was given to the company in compensation. In the period April 1 to September 20, 12.47 lakh cases of ticketless/irregular travellers were detected in suburban and non-suburban trains (long-distance trains) and an amount of `71.25 crore was realised as penalty. This is highest in terms of revenue among all zonal railways,” CR’s Chief Public Relations Officer Shivaji Sutar said.")
     print([(ent.text, ent.label_) for ent in doc.ents])
     visual = displacy.render(doc, style="ent")
 
@@ -63,6 +66,7 @@ def train_ner():
         url = 'file://' + f.name
         f.write(visual)
     webbrowser.open(url)
+
 
 # Flair Training data
 
@@ -82,6 +86,7 @@ class ModelArguments:
     use_crf: bool = field(
         default=False, metadata={"help": "Whether to use a CRF on-top or not."}
     )
+
 
 @dataclass
 class TrainingArguments:
@@ -108,6 +113,7 @@ class TrainingArguments:
         default="none", metadata={"help": "Defines embedding storage method."}
     )
 
+
 @dataclass
 class FlertArguments:
     context_size: int = field(
@@ -120,6 +126,7 @@ class FlertArguments:
         },
     )
 
+
 @dataclass
 class DataArguments:
     dataset_name: str = field(metadata={"help": "Flair NER dataset name."})
@@ -130,6 +137,7 @@ class DataArguments:
         default="resources/taggers/ner",
         metadata={"help": "Defines output directory for final fine-tuned model."},
     )
+
 
 def get_flair_corpus(data_args):
     ner_task_mapping = {}
@@ -156,9 +164,8 @@ def get_flair_corpus(data_args):
 
     return ner_task_mapping[dataset_name](**dataset_args)
 
+
 def flair_ner():
-
-
     # define columns
     columns = {0: 'text', 1: 'ner'}
 
@@ -177,34 +184,49 @@ def flair_ner():
     print(label_dict)
 
     # 4. initialize fine-tuneable transformer embeddings WITH document context
-    embeddings = TransformerWordEmbeddings(model='xlm-roberta-base',
-                                           layers="-1,-2",
-                                           subtoken_pooling="first",
-                                           fine_tune=True,
-                                           use_context=True,
-                                           )
+    # embeddings = TransformerWordEmbeddings(model='roberta-large',
+    #                                        layers="-1",
+    #                                        subtoken_pooling="first_last",
+    #                                        fine_tune=True,
+    #                                        use_context=True,
+    #                                        )
+    embedding_types = [
+        WordEmbeddings('glove'),
+        FlairEmbeddings('news-forward'),
+        FlairEmbeddings('news-backward'),
+    ]
+
+    embeddings = StackedEmbeddings(embeddings=embedding_types)
 
     # 5. initialize bare-bones sequence tagger (no CRF, no RNN, no reprojection)
     tagger = SequenceTagger(hidden_size=256,
                             embeddings=embeddings,
                             tag_dictionary=label_dict,
-                            tag_type='ner',
-                            use_crf=False,
-                            use_rnn=False,
-                            reproject_embeddings=False,
-                            )
+                            tag_type=label_type,
+                            use_crf=True)
 
     # 6. initialize trainer
     trainer = ModelTrainer(tagger, corpus)
 
     # 7. run fine-tuning
-    trainer.fine_tune('resources/taggers/ner-flert',
-                      learning_rate=5.0e-6,
-                      mini_batch_size=4,
-                      mini_batch_chunk_size=1,  # remove this parameter to speed up computation if you have a big GPU
-                      )
-
+    # trainer.fine_tune('resources/taggers/fullnew',
+    #                   learning_rate=0.1,
+    #                   mini_batch_size=32,
+    #                   max_epochs=200)
+    # training
+    trainer.train('resources/taggers/reg_train',
+                  learning_rate=0.1,
+                  mini_batch_size=32,
+                  embeddings_storage_mode='none',
+                  max_epochs=200)
+    # path = 'resources/taggers/flair250ep'
+    # trained_model = SequenceTagger.load(path +'/final-model.pt')
+    # trainer.resume(trained_model,
+    #                base_path=path + '-resume',
+    #                max_epochs=250,
+    #                )
 if __name__ == '__main__':
-    #opt = get_config("config_files/en_filtered_config.yaml")
-    #train(opt, amp=False)
+    #   opt = get_config("config_files/en_filtered_config.yaml")
+    # train(opt, amp=False)
     flair_ner()
+
