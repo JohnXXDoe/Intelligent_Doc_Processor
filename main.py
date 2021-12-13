@@ -93,7 +93,7 @@ def img_ocr(loc):  # For Image/Scanned PDF to text
 def ner(pdf):
     sentences = []
     tagger = SequenceTagger.load(
-        r'C:\Users\33669\PycharmProjects\OCR\trainer\resources\taggers\flair-embd\final-model.pt')
+        r'C:\Users\33669\PycharmProjects\OCR\trainer\resources\taggers\reg_train\final-model.pt')
     print(tagger)
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
@@ -182,8 +182,8 @@ def test_html_rendering():
 
 
 if __name__ == '__main__':
-    pdfname = 'EIL Specs'
-    PDF_file = r'H:\Code\Data\EIL Specs.pdf'
+    pdfname = 'AGRA'
+    PDF_file = r'C:\Users\33669\PycharmProjects\OCR\trainer\ner_data\raw/' + pdfname + '.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
     filename = 'PGCIL'
     # img_ocr(img_loc)
