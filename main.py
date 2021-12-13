@@ -127,59 +127,6 @@ def ner(pdf):
         f.write(actual)
     webbrowser.open(url)
 
-def mock_ner_span(text, tag, start, end):
-    span = Span([]).set_label('class', tag)
-    span.start_pos = start
-    span.end_pos = end
-    span.tokens = [Token(text[start:end])]
-    return span
-
-
-def test_html_rendering():
-    text = (
-        "Boris Johnson has been elected new Conservative leader in a ballot of party members and will become the "
-        "next UK prime minister. &"
-    )
-    sent = Sentence()
-    sent.get_spans = MagicMock()
-    sent.get_spans.return_value = [
-        mock_ner_span(text, "PER", 0, 13),
-        mock_ner_span(text, "MISC", 35, 47),
-        mock_ner_span(text, "LOC", 109, 111),
-    ]
-    sent.to_original_text = MagicMock()
-    sent.to_original_text.return_value = text
-    colors = {
-        "PER": "#F7FF53",
-        "ORG": "#E8902E",
-        "LOC": "yellow",
-        "MISC": "#4647EB",
-        "O": "#ddd",
-    }
-    actual = render_ner_html([sent], colors=colors)
-
-    expected_res = HTML_PAGE.format(
-        text=PARAGRAPH.format(
-            sentence=TAGGED_ENTITY.format(
-                color="#F7FF53", entity="Boris Johnson", label="PER"
-            )
-                     + " has been elected new "
-                     + TAGGED_ENTITY.format(color="#4647EB", entity="Conservative", label="MISC")
-                     + " leader in a ballot of party members and will become the next "
-                     + TAGGED_ENTITY.format(color="yellow", entity="UK", label="LOC")
-                     + " prime minister. &amp;"
-        ),
-        title="Flair",
-    )
-
-    html = actual
-
-    with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as f:
-        url = 'file://' + f.name
-        f.write(html)
-    webbrowser.open(url)
-    assert expected_res == actual
-
 
 if __name__ == '__main__':
     pdfname = 'AGRA'
