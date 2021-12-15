@@ -1,0 +1,34 @@
+Conductor,Aluminium Conductor
+Conductor,Circular Stranded and compacted
+Insulation,XLPE
+Insulation,gas/steam curing
+Outer sheath,FRLS
+Inner sheath,extruded PVC inner sheath
+screen,extruded semi-conducting compound
+Outer sheath,PVC blue
+Oxygen index,Oxygen index of minimum 29
+Temperature index,Temperature index of minimum 250 C
+Acid gas emission,Acid gas emission of max. 20% (As per IEC 754-1)
+light Transmission,Average light Transmission- 40% minimum
+Smoke Density,Average Smoke Density- 60% Max
+Flame test,Flame test requirements of IEEE 383
+Flame test,Flame test requirements of IEC-332 Part 3
+Outer sheath,protected against rodent and termite attack
+Armour,Galvanised steel formed wire (strip)
+Armour,Hard drawn aluminium wire armour
+metallic screen,Armour constitute the metallic screen.
+fault current,400 A for 3 second
+Identification,Number coding
+Inner sheath,except single core cables
+Armour,Galvanised steel formed wire (strip)
+Armour,Hard drawn aluminium wire armour
+Outer sheath,Extruded FRLS PVC
+Marking,Manufacturer’s Name
+Marking,Year of Manufacture
+Marking,Cable code
+Marking,Type of Cable & Voltage class
+Marking,Nominal cross section area of Conductor & no. of cores
+Marking,Progressive sequential length marking
+Marking,Drum Number
+Length,(±2%) of standard drum length
+Length,overall tolerance (-)2% and (+)2%

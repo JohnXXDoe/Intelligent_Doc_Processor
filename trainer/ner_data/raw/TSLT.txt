@@ -1,0 +1,23 @@
+Conductor,plain copper
+Conductor,aluminum Wires
+Conductor,grade H4 and Class 2
+conductor,stranded and either compacted circular or sector shaped
+Insulation, XLPE insulation except Earthing cables
+Insulation,PVC insulation
+Core Identification, 1 Core : Black
+Core Identification,2 Core : Red and Black
+Core Identification,2 Core + Earth: Red, Black and Green/Yellow
+Core Identification,3 Core : Red, Yellow and Blue
+Core Identification, 4 Core : Red, Yellow, Blue and Black
+Core Identification,5 or more cores - numbered (Black numbers printed on grey coloured insulation)
+Fillers,Polypropylene
+Inner Sheath, PVC applied by extrusion
+Armour,galvanized steel
+Outer Sheath,Flame Retardant with reduced Halogen evolution and smoke (FR-LSH)
+marking,The Voltage grade designation
+marking,Supplier's identification
+marking,Number of Cores and nominal cross sectional area of conductors
+marking,Cable insulation Type
+marking,Year of manufacturing
+marking,The drum progressive length of cable at every meter
+Packing,non-returnable wooden/ returnable steel drums

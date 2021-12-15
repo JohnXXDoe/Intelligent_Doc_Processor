@@ -1,0 +1,17 @@
+Cable Type,LT upto (1100 V) XLPE Insulated
+Conductor,stranded aluminum to form compact sector shaped
+Insulation,cross linked polyethylene
+Conductor,conductor temperature of 130 deg C continuously and 250 deg C during a Short Circuit condition
+Inner sheath,PVC sheath
+Armour,galvanized strip
+Outer sheath,Extruded PVC ST2
+Packing,500 m or more with 5% tolerance
+Packing,non-returnable wooden drums
+Marking,information embossed or indented
+Marking,“DDUGJY, Name of Employer”
+Cable type,SPECIFIC DESIGN REQUIREMENTS:
+Conductor,Copper Cables
+Insulation,HR PVC insulated
+Inner sheath,HR extruded PVC inner sheathed
+Armour,round galvanised steel wire
+Outer sheath,overall HR extruded PVC sheathed

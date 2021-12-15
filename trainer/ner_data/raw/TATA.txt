@@ -1,0 +1,13 @@
+Cable Type,LV XLPE Control Cables
+Conductor,Cu
+Conductor,Stranded
+Insulation,XLPE
+Filler,Not required
+Inner Sheath,extrusion Thermoplastic material
+Armouring,Galvanized round steel wire
+Armouring,Galvanised steel Flat Strip
+Outer Sheath,polyvinyl chloride (PVC) type ST 2
+Colour of the Outer Sheath,Yellow with UV protection
+Core Identification,numbers irrespective of number of cores
+Core Identification,Colour of insulation grey
+Packing,wooden drum

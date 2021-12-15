@@ -1,0 +1,18 @@
+Conductor, Aluminum 
+Insulation,XLPE
+Conductor,area less than 16 sqmm shall be circular only
+conductor,conductors of nominal area 16 mm2 and above may be circular of shaped
+Inner sheath,Type ST-2 PVC
+Armour,single round galvanised steel wires where the calculated diameter below armouring does not exceed 13 mm and by galvanized steel strips where this dimension is greater than 13 mm
+Core identification,7 Core and above shall be numbered with every 1 meter interval
+Outer sheath,Type ST-2 PVC
+marking,manufacturers name and address
+marking,Drum Number
+marking,Size of cable
+marking,ISI Marking
+marking,Name of Mfg.
+marking,No of cores x Cable size sq mm
+marking,CMRL certification No
+marking,Year of Manufacturing
+Drum length,500 meters for all control cables and 250/500 meter for LT Power cable
+Packing,non returnable strong wooden drum

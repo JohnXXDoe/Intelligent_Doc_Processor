@@ -1,0 +1,34 @@
+Conductor,plain copper or aluminum
+Conductor,stranded
+Conductor,grade H4
+Conductor,upto & including 4sqmm shall be stranded annealed copper
+Conductor,4 sqmm and upto & including 10sqmm shall be solid / stranded aluminum
+Conductor,compacted circular or sector shaped
+insulation,XLPE insulation
+Identification,four cores shall have printed numerals
+Filler,Polypropylene
+Inner sheath,PVC applied by extrusion
+Armour,galvanized steel
+Armour,hard drawn aluminum
+Armour,round wires or strips
+Armour,coverage of armouring shall be 90%
+outer sheath,resistant to water
+outer sheath,ultra violet radiation
+outer sheath,fungus, termite
+outer sheath,rodent attacks
+outer sheath,Flame Retardant Low Smoke type
+Marking,embossed or engraved
+Marking,voltage designation
+Marking,Manufacturers identification
+Marking,Number of Cores and nominal cross sectional area of conductors
+Marking,Nominal cross section area of Conductor & no. of cores
+Marking,progressive length of cable at every meter
+Length,Negative tolerance on cable length of cable drums is not acceptable
+Oxygen index, critical oxygen index value shall be minimum 29
+Temperature index,temperature index value shall be minimum 250 C
+Acid gas emission,less than 20%
+light Transmission,40% minimum
+Smoke Density,shall not be more than 60%
+Flame test,IS-10810 Part-53
+Flame test,IS-10810 Part-61
+Flame test,Part-62(CAT-AF)

@@ -1,0 +1,20 @@
+Cable Type,11 KV, 3x300 Sq. mm XLPE (armoured)CABLE
+Conductor,Aluminum Conductor
+Conductor Screen,semi- conducting screen
+Insulation,XLPE insulation
+Insulation screen,bonded type and strippable on adequate heating
+Insulation screen,copper tape
+Inner sheath,PVC inner sheath
+Armour,galvanized steel strip
+Armour,dimensions of steel strip shall be as per table 4 of IS: 7098 (Part-II)/1985
+Outer sheath,Extruded PVC outer sheath of type ST-2
+Filler,PVC fillers
+Conductor weight,weight of aluminium conductor used in the cable shall be 2433 Kg/Km
+Packing,250 Mts
+Packing,non-returnable wooden drums
+Marking,Property of PVVNL
+Marking,Name of Manufacturer 
+Marking,Year of manufacture 
+Marking,Specification No. 
+Marking,Voltage grade 
+Marking,size of cores at the interval of one meter length

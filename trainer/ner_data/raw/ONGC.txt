@@ -1,0 +1,42 @@
+Conductor,aluminium or copper
+insulation,XLPE
+Conductor,annealed copper
+Conductor,upto 4 mm size, the conductor shall be solid
+Conductor,upto & including 4sqmm shall be stranded annealed copper
+Conductor,above 4 mm, conductors shall be concentrically stranded
+insulation,XLPE
+Filler,non-hygroscopic material
+Inner sheath,additional layer of thermoplastic material
+Inner sheath,extruded type
+Armour,cable size upto 25 Sq. mm.:Armour of 1.4 mm dia G.I. round wire
+Armour,cable size above 25 Sq. mm. Armour of 4 mm wide 0.8 mm thick G.I strip
+Armour,Galvanised steel flat strip / round wires
+outer sheath,extruded type layer of suitable PVC material
+outer sheath,ambient temp 50 deg. C
+outer sheath,resistant to water
+outer sheath,ultraviolet radiation
+outer sheath,fungus
+outer sheath,termite and rodent attacks
+Conductor,circular stranded Aluminium
+Semiconducting tape,semi-conducting barrier tape/tapes shall be provided over the conductors.
+Conductor screen,extruded layer of thermosetting semi-conducting compound
+insulation,XLPE
+Insulation screen,two parts consisting
+Insulation screen,semi-conducting swellable tape
+Insulation screen,extruded semi-conducting material
+Insulation screen,strippable
+Insulation screen,copper tape helical applied with a 30% overlap
+Insulation screen,A binder tape of copper shallbe applied over the copper wire metallic screen
+identification,the insulation screen bylegible printing on the length
+identification,markertape
+filler,polypropylene
+Inner sheath,extruded
+Armour,galvanised steel wire
+outer sheath,PVC polyethylene compound type ST-2
+Marking,ONGC-SPVPP-5MW
+Marking,Voltage grade
+Marking,Year of manufacture
+Marking,Manufactures name
+Marking,Successive Length
+Marking,Size of cable
+Marking,ISI mark

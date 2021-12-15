@@ -1,0 +1,37 @@
+TenderNum,TENDER NO. PKNBOS0022
+Cable Type,HT Cable(150 240 & 630 Sqmm)
+Conductor,circular stranded Aluminium
+Conductor screen,Extruded semi-conducting compound
+insulation,Cross-linked polyethylene (XLPE)
+Insulation screen,two parts consisting
+Insulation screen,Extruded semi-conducting compound.
+Method of curing,“dry curing / gas curing”.
+Armour,Aluminium round wire armour H4 Grade as per IS:8130
+outer sheath,Extruded PVC Type ST2
+outer sheath,FRLS properties
+Short-circuit,Conductor (kAmps) 21 kA for 0.3 sec (min)
+Short-circuit,Conductor (kAmps) 12.5 kA for 1 sec(min)
+Short-circuit,Conductor (kAmps) 21 kA for 1 sec(min)
+Short-circuit,Armour (kAmps) 21 kA for 0.3 sec (min)
+Short-circuit,Armour (kAmps) 12.5 kA for 1 sec(min)
+Short-circuit,Armour (kAmps) 21 kA for 1 sec(min)
+Marking,Embossing on outer sheath at an interval of 5 meters
+Marking,Cable size and voltage grade
+Marking,Word ‘FRLS’
+Marking,Screen Fault current __ KA for __sec
+Marking,Manufactures name
+Marking,brand name or trade mark, ISI mark / IS standard
+Marking,Embossing / Printing on outer sheath at an interval of 1 meter
+Marking,Sequential marking of length of the cable in meters.
+Packing,non-returnable wooden or steel drum of heavy construction
+Drum length,1000 meter +/- 5%
+drum Marking,BHEL PO number and date
+drum Marking,BHEL specification number
+drum Marking,Cable description
+drum Marking,Manufacturer name
+drum Marking,Address and contact number
+drum Marking,Part number, Size & Length of the cable
+drum Marking,Cable code
+drum Marking,Voltage grade
+drum Marking,Approx gross mass
+drum Marking,Year of manufacture etc stenciled on both sides of the drum

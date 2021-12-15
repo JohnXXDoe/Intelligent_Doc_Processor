@@ -1,0 +1,19 @@
+Cable Type,33 kV 3x300mm2 XLPE ARMOURED Cable
+Conductor, Aluminum 
+Conductor screen, semi-conducting
+Insulation,XLPE
+Insulation screen, semi-conducting
+Inner sheath,Type ST-2 PVC 
+Armour,Galvanized steel strip 
+Outer sheath,Type ST-2 PVC
+Outer sheath,rodent and termite
+Temperature, (-5) Minimum ambient air temperature (oC)
+Length,250 m. Non-standard length
+marking,manufacturers name and address
+marking,Size of cable
+marking,ISI Marking
+marking,Specification No
+marking,Voltage grade and size of cores
+marking,CMRL certification No
+marking,Year of Manufacturing
+Packing,non returnable wooden drum

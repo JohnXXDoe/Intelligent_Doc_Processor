@@ -1,0 +1,18 @@
+Cable Type,L.T.AERIAL BUNCHED CABLES
+Conductor,aluminium 
+Messenger Conductor,aluminium alloy
+Messenger,bare
+Standard,IS: 14255/1995 
+Conductor Insulation,black weather resistant cross linked polyethylene
+Core identification,one, two and three ridges
+Packing,non-returnable wooden drums 
+Marking,Manufacturer's name
+Marking,Trade mark, if any
+Marking,Drum number or identification number
+Marking,Size of conductors
+Marking,Size of messenger
+Marking,Voltage grade
+Marking,Number and lengths of pieces of cable in each drum
+Marking,Gross mass of the packing
+Marking,Net mass of cable
+Marking,ISI mark.

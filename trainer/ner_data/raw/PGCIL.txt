@@ -1,0 +1,26 @@
+Conductor,stranded aluminium circular sector shaped
+Conductor,H2 grade
+armour,H4 grade
+Insulation,XLPE PVC insulated
+fault current,3 phase fault current
+armour,carrying 45 kA for at least 0.12 seconds
+Filler,non-hygroscopic 
+Filler,fire retardant material
+armour,Strip wire armouring method
+armour,control only wire 
+sheathing,oxygen index not less than 29
+sheathing,temperature index not less than 250C
+armour,aluminium wires strips
+outer sheath,FR type, C1 category
+Insulation,PVC to type-A
+conductor,stranded copper
+identification,printing legible Hindu Arabic Numerals
+conductor,Aluminium conductor
+insulation,XLPE
+screened,extruded semi conducting compound
+armour,non-magnetic material for single core
+armour,galvanized steel wire strip for multicore
+inner sheath,extruded PVC inner sheath ( Type ST-2) with FR properties
+outer sheath,extruded PVC outer sheath(Type ST-2), with FR properties
+armour,withstanding rated short time current
+diameter,plus or minus 2 mm

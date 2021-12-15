@@ -1,0 +1,41 @@
+Cabel Type,11KV GRADE XLPE INSULATED ALUMINIUM CONDUCTOR POWER CABLE OF SIZE 11KV 3Cx400 SQ.MM
+Conductor,Aluminium Conductor 
+Conductor,H2 Grade
+Conductor,Longitudinal Water-Blocking Arrangement
+Conductor Screen,Extruded semi-conducting material (Tapes are not Acceptable)
+Insulation,Extruded TR-XLPE
+sub-vendors,BSES-approved
+Insulation Screen,Freely-strippable
+Insulation Screen,Do not Heat- Freely Strippable
+Ovality,2% max
+XLPE Process,Dry Cure and Dry Cool Process only
+Approved Makes,Deviation shall not acceptable
+Water-Swellable Tape,Semi-Conducting Water-Sellable Tape
+Water-Swellable Tape,Nominal Thickness:0.3 mm
+Water-Swellable Tape,Weight:118 gm/sq.m approx
+Water-Swellable Tape,12 mm in 1 min Swell height
+Core Identification,coloured strips
+Core Identification,carry the name of manufacturer
+Metallic Screen,Copper Tape applied helically over the layer
+Filler,center interstices shall be filled by PP filler.
+Optical Fibre Cable,inside the cable in place of one filler
+Binder Tape,manufacturer's standard
+Inner Sheath,Black PVC type ST-2
+Armour, Galvanized Steel flat strip
+Binder Tape,Rubberised cotton Tape
+Outer Sheath,PVC ST-2
+Outer Sheath,Color Blue
+Marking,embossed as well as laser printed
+Marking,voltage designation
+Marking,cable code
+Marking,Manufacturer's Name and Trade-mark
+Marking,Number of cores and nominal cross sectional area
+Marking,Laser print sequential length of cable at every meter
+Marking,Name of buyer
+Marking, Month & Year of manufcaturing
+Marking,IS reference
+Marking,Batch No Lot No
+Marking,Purchase Order Number date
+Marking,Drum no
+Tolerance,+/-5%
+Packing,Steel Non-Returnable

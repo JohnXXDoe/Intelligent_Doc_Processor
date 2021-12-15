@@ -1,0 +1,10 @@
+Cable Type,LT Power Cables( PVC)-FRLS TYPE
+conductor,aluminium copper
+insulation,PVC insulated
+Inner Sheath,extruded PVC inner sheath
+Armour,steel strip armored
+outer Sheath,extruded PVC overall sheath
+Cable Type,LT Power Cables (XLPE)- FRLS TYPE
+insulation, XLPE insulated
+Cable Type,Control Cables-FRLS TYPE
+Armour,steel wire armored

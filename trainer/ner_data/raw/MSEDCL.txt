@@ -1,0 +1,19 @@
+Conductor,stranded compacted H2/H4 grade aluminium
+Conductor Screen,semi-conducting cross link material
+Insulation,XLPE
+Insulation Screen,extruded semi-conducting cross link material
+Insulation Screen,metallic layer of copper tapes.
+Inner Sheath,heat resistant PVC
+Armour, single galvanized round steel wires
+Outer Sheath,PVC compound
+Outer Sheath,black
+Marking,Non erasable Sequential Marking of length shall be provided by embossing
+Marking,Manufactures name and/or Trade name.
+Marking,Voltage grade.
+Marking,Year of manufacture.
+Marking,M.S.E.D.C.L.
+Marking,Successive Length.
+Marking,Size of cable
+Marking,ISI mark
+Packing,250 running meters with plus minus 5% tolerance
+Packing,non returnable wooden drum

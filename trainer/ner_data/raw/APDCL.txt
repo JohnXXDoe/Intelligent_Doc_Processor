@@ -1,0 +1,35 @@
+Cable Type,HT CABLE
+Conductor,Aluminium
+Conductor,H4 Grade Aluminium
+Conductor,Stranded compacted Circular
+Insulation,XLPE
+Insulation,gas/steam curing
+Inner sheath,extruded PVC, Type ST-2
+Inner sheath,wrapped PVC tape for 11 KV
+Conductor screen,extruded
+Conductor screen,Extruded, cross linked, semi-conducting compound of 1.0 mm.thickness for 33 KV
+Conductor screen,thickness for 11 KV 
+insulation screen,extruded
+insulation screen,strippable type
+insulation screen,Annealed copper 0.06 mm (minimum) thick
+insulation screen,1 core cable, the nonmagnetic metal Armour will act as metallic part insulation screening
+Outer shetah,"FRLS"
+Oxygen index,minimum 29
+Temperature index,minimum 250 C
+Acid gas emission,Max 20% ( as per 1EC 754-1)
+light Transmission,40% minimum
+Smoke Density,60% (As per ASTMD 2843) 
+Flame test,As per Swedish chimney test F3 as per SEN 4241475
+Flame test,As per IEC 332 part-3 (Category B)
+Outer shetah,protected against rodent and termite attack
+Armour,Galvanised steel formed wire (strip)
+Armour,Round Wire Armour made of non-magnetic material 
+armour,made of non magnetic metal
+Identification,Manufacturer's Name or Trade Mark
+Identification,Voltage Grade
+Identification,Nominal section
+Identification,material of conductor
+Identification,number of cores
+Identification,Year of manufacture
+Identification,APDCL
+Identification,XLPE
