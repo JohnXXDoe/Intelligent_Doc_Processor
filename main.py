@@ -1,9 +1,13 @@
 import csv
 
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdftypes import resolve1
+from tqdm import tqdm
 import easyocr
 from pdf2image import convert_from_path  # For scanned PDFs
-from PIL import Image
-from pdfminer import high_level # Convert text PDF to text
+import time
+from pdfminer import high_level  # Convert text PDF to text
 from pdfminer import pdfpage
 import cv2
 import pytesseract
@@ -14,13 +18,9 @@ from io import StringIO
 from flair.models import SequenceTagger
 from flair.tokenization import SegtokSentenceSplitter
 
-from unittest.mock import MagicMock
-from flair.data import Sentence, Span, Token
-from flair.visual import *
 from flair.visual.ner_html import render_ner_html, HTML_PAGE, TAGGED_ENTITY, PARAGRAPH
 import tempfile
 import webbrowser
-
 
 
 def pdf2img(PDF):
@@ -90,10 +90,11 @@ def img_ocr(loc):  # For Image/Scanned PDF to text
     cv2.waitKey(0)
 
 
-def ner(pdf):
+def ner(pdf, pdfname):
+    i = 1
     sentences = []
     tagger = SequenceTagger.load(
-        r'C:\Users\33669\PycharmProjects\OCR\trainer\resources\taggers\reg_train\final-model.pt')
+        r'C:\Users\33669\PycharmProjects\OCR\trainer\resources\taggers\reg_train\best-model.pt')
     print(tagger)
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
@@ -101,27 +102,51 @@ def ner(pdf):
     laparams = LAParams(char_margin=30, line_margin=2, boxes_flow=1)
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
     interpreter = PDFPageInterpreter(rsrcmgr, device)
-    rawdata = []
     fp = open(pdf, 'rb')
-
+    parser = PDFParser(fp)  # For getting total pages
+    document = PDFDocument(parser)  # For getting total pages
+    total_pages = resolve1(document.catalog['Pages'])['Count']  # For making progress bar
+    ##############
+    # Progress bar
+    ##############
+    pbar = tqdm(total=total_pages, ncols=150,
+                desc=f" Processing Page . . . . ")
+    ##############
+    # Prediction
+    ##############
     for pagenumber, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        # print(pagenumber)
         if pagenumber:
             interpreter.process_page(page)
             data = retstr.getvalue()
-            # cleansent = clean(sent)
             encoded_string = data.encode("ascii", "ignore")
-            cleanpage = encoded_string.decode()
+            clean = encoded_string.decode()
             splitter = SegtokSentenceSplitter()
-            sentences = splitter.split(cleanpage)
+            sentences = splitter.split(clean)
             tagger.predict(sentences)
-            for sentence in sentences:
-                print(sentence.to_tagged_string())
+            pbar.update(1)
+
+    # (HTML NEW FORMAT) Change in ner_html.py
+    # HTML_PAGE =
+    """
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <title>{title}</title>
+        </head> 
+        <body>
+        <style="background-color:#161b22"
+        <h1 style="background-color:#30363d;text-align:center;font-family: 'Times New Roman';color:#58a6ff">Havells Document Extraction</h1>
+        <h2 style="background-color:#30363d;text-align:center;font-family: 'Times New Roman';color:#58a6ff">{title}</h2>
+        <style="font-size: 15px; font-family: 'Segoe UI';line-height: 1; padding: 4rem 9rem">{text}</body>
+    </html>
+    """
+
     colors = {
-        "default": "#F7FF53",
+
+        "default": "#FF40A3",
         "O": "#ddd",
     }
-    actual = render_ner_html(sentences, colors=colors)
+    actual = render_ner_html(sentences, title=pdfname, colors=colors)
     with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as f:
         url = 'file://' + f.name
         f.write(actual)
@@ -129,12 +154,12 @@ def ner(pdf):
 
 
 if __name__ == '__main__':
-    pdfname = 'AGRA'
+    pdfname = 'EIL'
     PDF_file = r'C:\Users\33669\PycharmProjects\OCR\trainer\ner_data\raw/' + pdfname + '.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
     filename = 'PGCIL'
     # img_ocr(img_loc)
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
-    ner(PDF_file)
-    #test_html_rendering()
+    ner(PDF_file, pdfname)
+    # test_html_rendering()
