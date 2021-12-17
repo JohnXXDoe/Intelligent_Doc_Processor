@@ -125,22 +125,6 @@ def ner(pdf, pdfname):
             tagger.predict(sentences)
             pbar.update(1)
 
-    # (HTML NEW FORMAT) Change in ner_html.py
-    # HTML_PAGE =
-    """
-    <!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <title>{title}</title>
-        </head> 
-        <body>
-        <style="background-color:#161b22"
-        <h1 style="background-color:#30363d;text-align:center;font-family: 'Times New Roman';color:#58a6ff">Havells Document Extraction</h1>
-        <h2 style="background-color:#30363d;text-align:center;font-family: 'Times New Roman';color:#58a6ff">{title}</h2>
-        <style="font-size: 15px; font-family: 'Segoe UI';line-height: 1; padding: 4rem 9rem">{text}</body>
-    </html>
-    """
-
     colors = {
 
         "default": "#FF40A3",
@@ -154,7 +138,7 @@ def ner(pdf, pdfname):
 
 
 if __name__ == '__main__':
-    pdfname = 'EIL'
+    pdfname = 'MSEDCL'
     PDF_file = r'C:\Users\33669\PycharmProjects\OCR\trainer\ner_data\raw/' + pdfname + '.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
     filename = 'PGCIL'
