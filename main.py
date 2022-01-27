@@ -94,7 +94,7 @@ def ner(pdf, pdfname):
     i = 1
     sentences = []
     tagger = SequenceTagger.load(
-        r'C:\Users\33669\PycharmProjects\OCR\trainer\resources\taggers\reg_train\best-model.pt')
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-base-full\final-model.pt')
     print(tagger)
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
@@ -138,8 +138,8 @@ def ner(pdf, pdfname):
 
 
 if __name__ == '__main__':
-    pdfname = 'MSEDCL'
-    PDF_file = r'C:\Users\33669\PycharmProjects\OCR\trainer\ner_data\raw/' + pdfname + '.pdf'
+    pdfname = 'PGCIL'
+    PDF_file = r'C:\Data\test/' + pdfname + '.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
     filename = 'PGCIL'
     # img_ocr(img_loc)
