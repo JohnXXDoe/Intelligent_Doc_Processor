@@ -153,17 +153,24 @@ def ner(pdf, titles, limit):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float)
-    parser.add_argument('-n', dest='pdfname', help='Name of PDF to be processed', type=str)
+    parser.add_argument('-f', dest='pdfname', help='Name of PDF to be processed', type=str)
     args = parser.parse_args()
 
     print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'///////////////////     D O C U M E N T - N E R - T E S T    ///////////////////')
-    print(f'///////////////////                                          ///////////////////')
+    print(f'///////////////////             HAVELLS NEW TECH             ///////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'-------------------------------------------------------------------------------')
     print(f'|::::::::::::::::   Threshold Confidence : {args.threshold}   :::::::::::::::::|')
-    print(f'|::::::::::::::::     PDF to be evaluated : {args.pdfname}    ::::::::::::::::|')
+    print(f'|::::::::::::::::     PDF to be evaluated : {args.pdfname}    :::::::::::::::::|')
     print(f'|______________________________________________________________________________|')
+
     threshold = args.threshold
     pdfname = args.pdfname
 
@@ -176,3 +183,8 @@ if __name__ == '__main__':
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
     ner(PDF_file, pdfname, threshold)
     # test_html_rendering()
+
+'''
+CLI command :
+# // E:\PycharmProjects\DL\venv\scripts\python.exe E:\PycharmProjects\DL\Doc_IMG-OCR\main.py -c 0.7 -f EIL //
+'''
