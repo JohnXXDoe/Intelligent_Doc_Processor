@@ -1,4 +1,5 @@
 import csv
+import argparse
 
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
@@ -90,11 +91,11 @@ def img_ocr(loc):  # For Image/Scanned PDF to text
     cv2.waitKey(0)
 
 
-def ner(pdf, pdfname):
+def ner(pdf, titles, limit):
     i = 1
     sentences = []
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-base-full\final-model.pt')
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\all-fixed-roberta-base-resume\best-model.pt')
     print(tagger)
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
@@ -106,31 +107,43 @@ def ner(pdf, pdfname):
     parser = PDFParser(fp)  # For getting total pages
     document = PDFDocument(parser)  # For getting total pages
     total_pages = resolve1(document.catalog['Pages'])['Count']  # For making progress bar
-    ##############
-    # Progress bar
-    ##############
-    pbar = tqdm(total=total_pages, ncols=150,
-                desc=f" Processing Page . . . . ")
+    pbar = tqdm(total=total_pages, desc='Reading PDF')
     ##############
     # Prediction
     ##############
-    for pagenumber, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        if pagenumber:
+
+    for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
+        if pagenum:
             interpreter.process_page(page)
-            data = retstr.getvalue()
-            encoded_string = data.encode("ascii", "ignore")
-            clean = encoded_string.decode()
-            splitter = SegtokSentenceSplitter()
-            sentences = splitter.split(clean)
-            tagger.predict(sentences)
-            pbar.update(1)
+        pbar.update(1)
+    pbar.close()
+    data = retstr.getvalue()
+    encoded_string = data.encode("ascii", "ignore")
+    clean = encoded_string.decode()
+    splitter = SegtokSentenceSplitter()
+    sentences = splitter.split(clean)
+    for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
+        tagger.predict(sentence)
+
+    ###################
+    # LOG
+    ##################
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'//////////////////  E X T R A C T I O N    R E S U L T  ///////////////////////')
+    print(f'-------------------------------------------------------------------------------')
+    print(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
+    for sentence in sentences:
+        for entity in sentence.get_spans('ner', min_score=threshold):
+            print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
+    print(f'|______________________________________________________________________________|')
 
     colors = {
 
         "default": "#FF40A3",
         "O": "#ddd",
     }
-    actual = render_ner_html(sentences, title=pdfname, colors=colors)
+    actual = render_ner_html(sentences, title=titles, colors=colors)
+
     with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as f:
         url = 'file://' + f.name
         f.write(actual)
@@ -138,12 +151,28 @@ def ner(pdf, pdfname):
 
 
 if __name__ == '__main__':
-    pdfname = 'PGCIL'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float)
+    parser.add_argument('-n', dest='pdfname', help='Name of PDF to be processed', type=str)
+    args = parser.parse_args()
+
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'///////////////////     D O C U M E N T - N E R - T E S T    ///////////////////')
+    print(f'///////////////////                                          ///////////////////')
+    print(f'////////////////////////////////////////////////////////////////////////////////')
+    print(f'-------------------------------------------------------------------------------')
+    print(f'|::::::::::::::::   Threshold Confidence : {args.threshold}   :::::::::::::::::|')
+    print(f'|::::::::::::::::     PDF to be evaluated : {args.pdfname}    ::::::::::::::::|')
+    print(f'|______________________________________________________________________________|')
+    threshold = args.threshold
+    pdfname = args.pdfname
+
+    # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
     PDF_file = r'C:\Data\test/' + pdfname + '.pdf'
     img_loc = r'C:\Users\33669\PycharmProjects\OCR\pdf2img\K2.jpg'
-    filename = 'PGCIL'
+
     # img_ocr(img_loc)
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
-    ner(PDF_file, pdfname)
+    ner(PDF_file, pdfname, threshold)
     # test_html_rendering()

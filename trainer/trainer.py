@@ -5,7 +5,8 @@ from train import train
 from utils import AttrDict
 import pandas as pd
 from PIL import Image
-import pytesseract
+import torch
+torch.cuda.empty_cache()
 #from spacy import displacy
 import webbrowser
 import tempfile
@@ -169,48 +170,58 @@ def flair_ner():
     print(label_dict)
 
     # 4. initialize fine-tuneable transformer embeddings WITH document context
-    embeddings = TransformerWordEmbeddings(model='xlnet-large-cased',
+    embeddings = TransformerWordEmbeddings(model='roberta-base',
                                            layers="-1",
                                            subtoken_pooling="first_last",
                                            fine_tune=True,
                                            use_context=True,
+                                           allow_long_sentences=True,
                                            )
     # embedding_types = [
-    #     WordEmbeddings('glove'),
+    #     TransformerWordEmbeddings(model='roberta-base',
+    #                               layers="-1",
+    #                               subtoken_pooling="first_last",
+    #                               fine_tune=True,
+    #                               use_context=True,
+    #                               allow_long_sentences=True
+    #                               ),
     #     FlairEmbeddings('news-forward'),
     #     FlairEmbeddings('news-backward'),
     # ]
 
-    # embeddings = StackedEmbeddings(embeddings=embedding_types)
+    #embeddings = StackedEmbeddings(embeddings=embedding_types)
 
-    # 5. initialize bare-bones sequence tagger (no CRF, no RNN, no reprojection)
+    # 5. initialize bare-bones sequence tagger ()
     tagger = SequenceTagger(hidden_size=512,
                             embeddings=embeddings,
                             tag_dictionary=label_dict,
+                            use_crf=True,
                             tag_type=label_type,
-                            use_crf=True)
+                            )
 
     # 6. initialize trainer
     trainer = ModelTrainer(tagger, corpus)
 
 
     # 7. run fine-tuning
-    trainer.fine_tune('resources/taggers/roberta-base-3K',
-                      learning_rate=5.0e-6,
-                      mini_batch_size=2,
-                      max_epochs=1000)
+    # trainer.fine_tune('resources/taggers/all-fixed-roberta-base',
+    #                   learning_rate=5.0e-6,
+    #                   mini_batch_size=2,
+    #                   max_epochs=1000,
+    #                   use_final_model_for_eval=False,
+    #                   embeddings_storage_mode=None)
     # training
     # trainer.train('resources/taggers/reg_train',
     #               learning_rate=0.1,
     #               mini_batch_size=32,
     #               embeddings_storage_mode='none',
     #               max_epochs=200)
-    # path = 'resources/taggers/flair250ep'
-    # trained_model = SequenceTagger.load(path +'/final-model.pt')
-    # trainer.resume(trained_model,
-    #                base_path=path + '-resume',
-    #                max_epochs=250,
-    #                )
+    path = 'resources/taggers/all-fixed-roberta-base'
+    trained_model = SequenceTagger.load(path +'/best-model.pt')
+    trainer.resume(trained_model,
+                   base_path=path + '-resume',
+                   max_epochs=1000,
+                   )
 if __name__ == '__main__':
     #   opt = get_config("config_files/en_filtered_config.yaml")
     # train(opt, amp=False)
