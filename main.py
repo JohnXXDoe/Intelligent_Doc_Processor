@@ -136,13 +136,18 @@ def ner(pdf, titles, limit):
         print(f'-------------------------------------------------------------------------------')
         print(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
+        f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////  E X T R A C T I O N    R E S U L T  /////////////////////// \n')
-        f.writelines(f'------------------------------------------------------------------------------- \n')
+        f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
+        f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
+        f.writelines(f'------------------------------------------------------------------------------- \n')
         for sentence in sentences:
             for entity in sentence.get_spans('ner', min_score=threshold):
-                f.writelines(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% ::::// \n')
+                f.writelines(f'> {entity.text}, {entity.tag}[{(round(entity.score, 4) * 100)}% ] \n')
+                f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n')
                 print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
+                print(f'// =={sentence.to_original_text()}  ====  {entity.tag} :::: :::://')
         print(f'|______________________________________________________________________________|')
 
     colors = {
