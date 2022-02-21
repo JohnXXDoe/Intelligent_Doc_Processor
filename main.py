@@ -95,7 +95,7 @@ def ner(pdf, titles, limit):
     i = 1
     sentences = []
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\all-fixed-roberta-base-resume\best-model.pt')
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt') #all-fixed-roberta-base-resume
     print(tagger)
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
@@ -128,14 +128,22 @@ def ner(pdf, titles, limit):
     ###################
     # LOG
     ##################
-    print(f'////////////////////////////////////////////////////////////////////////////////')
-    print(f'//////////////////  E X T R A C T I O N    R E S U L T  ///////////////////////')
-    print(f'-------------------------------------------------------------------------------')
-    print(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
-    for sentence in sentences:
-        for entity in sentence.get_spans('ner', min_score=threshold):
-            print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
-    print(f'|______________________________________________________________________________|')
+    logfile = f'C:\Data\Output\{titles}_summary.txt'
+    with open(logfile, 'w', newline='', encoding="utf-8") as f:
+        print('Writing values to file. . . ')
+        print(f'////////////////////////////////////////////////////////////////////////////////')
+        print(f'//////////////////  E X T R A C T I O N    R E S U L T  ///////////////////////')
+        print(f'-------------------------------------------------------------------------------')
+        print(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
+        f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
+        f.writelines(f'//////////////////  E X T R A C T I O N    R E S U L T  /////////////////////// \n')
+        f.writelines(f'------------------------------------------------------------------------------- \n')
+        f.writelines(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
+        for sentence in sentences:
+            for entity in sentence.get_spans('ner', min_score=threshold):
+                f.writelines(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% ::::// \n')
+                print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
+        print(f'|______________________________________________________________________________|')
 
     colors = {
 
@@ -182,7 +190,6 @@ if __name__ == '__main__':
     # pdf2img(PDF_file)
     # searchable_ocr(img_loc) # For converting image to text embedded PDF
     ner(PDF_file, pdfname, threshold)
-    # test_html_rendering()
 
 '''
 CLI command :
