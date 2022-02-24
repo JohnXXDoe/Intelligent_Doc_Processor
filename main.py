@@ -67,8 +67,8 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         image = cv2.imread(loc)
         reader = easyocr.Reader(['en'],
                                 recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
-        result = reader.readtext(loc, rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5,
-                                 ycenter_ths=0.5, width_ths=0.5)
+        result = reader.readtext(loc, height_ths=0.2,
+                                 ycenter_ths=0.3, width_ths=0.5)
 
         # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
@@ -89,7 +89,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
         for (bbox, text, prob) in result:  # , prob
-            total_text += str(text)
+            total_text += str(text)+'\n'
             file.write(str(text))
             file.write('\n')
         file.close()
