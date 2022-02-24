@@ -24,12 +24,11 @@ import tempfile
 import webbrowser
 
 
-
-
-def pdf2img(PDF, name):
+def pdf2img(PDF, name, pagenums=None):
     # print(len(PDF))
     global total_pages
-    pages = convert_from_path(PDF, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000)
+    pages = convert_from_path(PDF, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
+                              last_page=pagenums)
 
     #
     # # Counter to store images of each page of PDF to image
@@ -62,19 +61,20 @@ def searchable_ocr(img):  # From image to searchable PDF
 
 
 def img_ocr(location, filename):  # For Image/Scanned PDF to text
+    total_text = ''
     for page in tqdm(range(1, total_pages), desc='Converting images to text. . .'):
         loc = f'{location}/{filename}_{page}.png'
         image = cv2.imread(loc)
         reader = easyocr.Reader(['en'],
                                 recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
-        result = reader.readtext(loc, rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5)
+        result = reader.readtext(loc, rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5,
+                                 ycenter_ths=0.5, width_ths=0.5)
 
-                                 #paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
+        # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
         for (bbox, text, prob) in result:  # , prob
             # display the OCR'd text and associated probability
             # print("[INFO] {:.4f}: {}".format(prob, text))
-            print(text)
             # unpack the bounding box
             (tl, tr, br, bl) = bbox
             tl = (int(tl[0]), int(tl[1]))
@@ -89,18 +89,22 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
         for (bbox, text, prob) in result:  # , prob
+            total_text += str(text)
             file.write(str(text))
             file.write('\n')
-        file.close(200)
+        file.close()
         # show the output image
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
-        cv2.waitKey(0)
+        cv2.waitKey(20)
+    #print(f'FINAL PAGE TEXT : {total_text}')
+    return str(total_text)
 
 
-def ner(pdf, titles, limit):
+def ner(pdf, titles, im_loc):
     i = 1
     sentences = []
+    data = ''
     tagger = SequenceTagger.load(
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt')  # all-fixed-roberta-base-resume
     print(tagger)
@@ -125,7 +129,8 @@ def ner(pdf, titles, limit):
             if len(retstr.getvalue()) < 10:
                 print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
-
+                pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
+                data += img_ocr(im_loc, titles)  # Get OCR form converted image
             else:
                 data += retstr.getvalue().decode('ascii', 'ignore')
                 data = data.replace('\x0c', ' ')
@@ -135,7 +140,7 @@ def ner(pdf, titles, limit):
         pagenum += 1
         pbar.update(1)
     pbar.close()
-    data = retstr.getvalue()
+    # data = retstr.getvalue()
     encoded_string = data.encode("ascii", "ignore")
     clean = encoded_string.decode()
     splitter = SegtokSentenceSplitter()
@@ -183,7 +188,8 @@ def ner(pdf, titles, limit):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float, default=-1)
+    parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float,
+                        default=-1)
     parser.add_argument('-f', dest='pdfname', help='Name of PDF to be processed', type=str)
     args = parser.parse_args()
 
@@ -209,10 +215,10 @@ if __name__ == '__main__':
     PDF_file = f'C:/Data/test/{pdfname}.pdf'
     img_loc = r'C:\Data\Output\OCR\images'
 
-    pdf2img(PDF_file, pdfname)
-    img_ocr(img_loc, pdfname)
+    # pdf2img(PDF_file, pdfname)
+    # img_ocr(img_loc, pdfname)
     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
-    # ner(PDF_file, pdfname, threshold)
+    ner(PDF_file, pdfname, img_loc)
 
 '''
 CLI command :
