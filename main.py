@@ -15,7 +15,7 @@ import pytesseract
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from io import StringIO
+from io import StringIO, BytesIO
 from flair.models import SequenceTagger
 from flair.tokenization import SegtokSentenceSplitter
 
@@ -46,8 +46,8 @@ def pdf2img(PDF, name, pagenums=None):
         filename = f'{name}_' + str(image_counter) + ".png"
 
         # Save the image of the page in system
-        page.save(r'C:\Data\Output\OCR\images/' + filename)
-        print('Saved page number ' + str(image_counter))
+        page.save(r'C:/Data/Output/OCR/images/' + filename)
+        #print('Saved page number ' + str(image_counter))
         # Increment the counter to update filename
         image_counter = image_counter + 1
     total_pages = image_counter
@@ -109,7 +109,7 @@ def ner(pdf, titles, im_loc):
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt')  # all-fixed-roberta-base-resume
     print(tagger)
     rsrcmgr = PDFResourceManager()
-    retstr = StringIO()
+    retstr = BytesIO()
     codec = 'utf-8'
     laparams = LAParams(char_margin=30, line_margin=2, boxes_flow=1)
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
@@ -134,24 +134,25 @@ def ner(pdf, titles, im_loc):
             else:
                 data += retstr.getvalue().decode('ascii', 'ignore')
                 data = data.replace('\x0c', ' ')
-                print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
+                #print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
             retstr.truncate(0)
             retstr.seek(0)
         pagenum += 1
         pbar.update(1)
     pbar.close()
     # data = retstr.getvalue()
-    encoded_string = data.encode("ascii", "ignore")
-    clean = encoded_string.decode()
+    # encoded_string = data.encode("ascii", "ignore")
+    # clean = encoded_string.decode()
     splitter = SegtokSentenceSplitter()
-    sentences = splitter.split(clean)
+    sentences = splitter.split(data)
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
         tagger.predict(sentence)
 
     ###################
     # LOG
     ##################
-    logfile = f'C:\Data\Output\{titles}_summary.txt'
+    logfile = f'C:/Data/Output/{titles}_summary.txt'
+    dic = {}
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -161,17 +162,24 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////  E X T R A C T I O N    R E S U L T  //////////////////////// \n')
+        f.writelines(f'//////////////////      Text, Entity - [Confidence]    //////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-        f.writelines(f'Text, Entity-[Confidence]')
-        f.writelines(f'------------------------------------------------------------------------------- \n')
+        f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
         for sentence in sentences:
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
-                    f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                    f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                    dic.setdefault(sentence.to_plain_string(), [])
+                    dic[sentence.to_plain_string()].append(f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]')
+                    #f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                    #f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                     print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
         print(f'|______________________________________________________________________________|')
+        for k, v in dic.items():
+            if v is not None:
+                for tags in v:
+                    f.writelines(f'Tags: {tags} ')
+                f.writelines(f'\nSentence : {k} \n\n')
 
     colors = {
 
