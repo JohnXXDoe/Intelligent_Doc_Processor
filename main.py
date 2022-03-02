@@ -1,13 +1,13 @@
 import csv
+import camelot
 import argparse
-
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import resolve1
 from tqdm import tqdm
 import easyocr
 from pdf2image import convert_from_path  # For scanned PDFs
-import time
+from collections import OrderedDict
 from pdfminer import high_level  # Convert text PDF to text
 from pdfminer import pdfpage
 import cv2
@@ -100,7 +100,6 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
     #print(f'FINAL PAGE TEXT : {total_text}')
     return str(total_text)
 
-
 def ner(pdf, titles, im_loc):
     i = 1
     sentences = []
@@ -152,7 +151,7 @@ def ner(pdf, titles, im_loc):
     # LOG
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = {}
+    dic = {}    # Declare dictionary for removing duplicate sentences
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -177,7 +176,8 @@ def ner(pdf, titles, im_loc):
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
             if len(v) > 0:
-                for tags in v:
+                res = list(OrderedDict.fromkeys(v))
+                for tags in res:
                     f.writelines(f'Tags: {tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
