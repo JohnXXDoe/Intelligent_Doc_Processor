@@ -1,0 +1,118 @@
+//////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////// 
+//////////////////  E X T R A C T I O N    R E S U L T  //////////////////////// 
+//////////////////      Text, Entity - [Confidence]    ///////////////////////// 
+//////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////// 
+------------------------------------------------------------------------------- 
+
+
+Tags: > voltage grade, marking - [100.0%]
+
+Sentence : AGARTALA SMART CITY PROJECT TECHNICAL SPECIFICATION 10 1.1k 10.1 SCOPE This specification covers the design, manufacture, shop testing, supply and delivery in proper packed condition of 1.1kV voltage grade Aluminum Conductor, TR-XLPE insulated, PVC sheathed, Armoured, screened Power Cables generally conforming to the latest standards of IS / IEC / BS or equivalent. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > 1.1kV XLPE power cable, cableItype - [99.99%]
+
+Sentence : The 1.1kV XLPE power cable shall confirm to the currently applicable standards and codes of practice and reports as mention below table: CHIEF EXECUTIVE OFFICER Page 91 of 159 DOCUMENT NUMBER CONTRACTOR AGARTALA SMART CITY PROJECT TECHNICAL SPECIFICATION S.No. Title cords. of cables. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS : 5831, standard - [100.0%]
+
+Sentence : IS: 5831 1984 3 Mild steel wires, Formed wires and Tapes for armouring 4 Fictitious calculation method for determination of dimensions of protective coverings of cables. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS : 10462 ( Part I, standard - [99.97%]
+Tags: > IS : 10810, standard - [99.64%]
+
+Sentence : IS :10462 ( Part I) 1983 IS : 7098 (Part-I) IS : 10810 IS : 1255 8 Drums for electric cables. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS : 10418, standard - [99.99%]
+Tags: > stranded H4 grade aluminium conductor, conductor - [100.0%]
+Tags: > TR-XLPE insulated, insulation - [99.99%]
+Tags: > extruded PVC inner sheath, innerIsheath - [100.0%]
+Tags: > galvanized round steel wire / strip armoured, armour - [100.0%]
+
+Sentence : IS : 10418 9 Electro Technical Vocabulary for Electric Cables IS:1885, Part-32 10.4 GENERAL TECHNICAL REQUIREMENTS: - 10.4.1 Armoured cables: - 1100 Volts Grade L.T. cable with stranded H4 grade aluminium conductor, TR-XLPE insulated, colour coded, laid up, with fillers and/or binder tape where necessary provided with extruded PVC inner sheath, single galvanized round steel wire / strip armoured and provided with PVC outer sheath. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > Inner sheath shall be applied by extrusion only, innerIsheath - [93.28%]
+
+Sentence : Inner sheath shall be applied by extrusion only. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > Bedding of PVC tape for inner sheath is not acceptable, insulationIscreen - [99.96000000000001%]
+
+Sentence : Bedding of PVC tape for inner sheath is not acceptable. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > cross linked polyethylene insulating compound, insulation - [100.0%]
+Tags: > Dry / Gas curing process, insulation - [100.0%]
+
+Sentence : The core insulation shall be with cross linked polyethylene insulating compound applied by extrusion & should be manufactured with Dry/Gas curing process. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS : 7098 ( Part-2, standard - [100.0%]
+
+Sentence : It shall conform to the properties given in Table-1 of IS: 7098(Part-2). 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > PVC compound, outerIsheath - [100.0%]
+Tags: > prevent attack by rodent & termite, outerIsheath - [100.0%]
+
+Sentence : The outer sheath of the cables shall be of PVC compound conforming to the armouring and shall be of PVC compound conforming to the requirements of Type ST2 compound of IS:5831 with suitable additives shall be provided (To prevent attack by rodent & termite). 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS : 798 - part-2, standard - [99.94%]
+
+Sentence : The thickness of outer sheath shall be as per amendment No. 1 to Table 5 of IS: 798- part-2. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS : 7098 ( pt.2, standard - [100.0%]
+
+Sentence : The dimension of the insulation, inner sheath and armour materials shall be governed by values given in latest IS: 7098(pt.2)1958. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > Non erasable Sequential Marking of length shall be provided by embossing, marking - [100.0%]
+
+Sentence : 10.4.3 Sequential marking of length on cable: - Non erasable Sequential Marking of length shall be provided by embossing on outer sheath of the cable for each meter length. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > the original, packing - [87.14%]
+
+Sentence : While transferring cable from one drum to another, the barrel of the new drum shall have a diameter not less than that of the original drum. k. The cables shall not be bent sharp to a small radius. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > The, packing - [84.89999999999999%]
+
+Sentence : The Drums shall be strong, weatherproof and non-returnable. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > Over all tolerance in total quantity of ordered cables shall be +/- 2 %, packing - [100.0%]
+
+Sentence : Over all tolerance in total quantity of ordered cables shall be +/- 2%. 
+
+X----------------------------------X-------------------------------X 
+
+Tags: > IS 1255, standard - [100.0%]
+
+Sentence : 10.4.8 Installation (Laying in Existing Cable trenches): - General: The cable installation including necessary termination shall be carried out in accordance with the specifications given herein and IS 1255. 
+
+X----------------------------------X-------------------------------X 
+
