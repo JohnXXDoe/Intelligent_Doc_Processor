@@ -68,11 +68,11 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         reader = easyocr.Reader(['en'],
                                 recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
         result = reader.readtext(loc, height_ths=0.2,
-                                 ycenter_ths=0.3, width_ths=0.5)
+                                 ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2, x_ths=50)
 
         # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
-        for (bbox, text, prob) in result:  # , prob
+        for (bbox, text) in result:  # , prob
             # display the OCR'd text and associated probability
             # print("[INFO] {:.4f}: {}".format(prob, text))
             # unpack the bounding box
@@ -88,7 +88,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
                         cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 90, 200), 8)
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
-        for (bbox, text, prob) in result:  # , prob
+        for (bbox, text) in result:  # , prob
             total_text += str(text)+'\n'
             file.write(str(text))
             file.write('\n')
@@ -162,24 +162,25 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////  E X T R A C T I O N    R E S U L T  //////////////////////// \n')
-        f.writelines(f'//////////////////      Text, Entity - [Confidence]    //////////////////////// \n')
+        f.writelines(f'//////////////////      Text, Entity - [Confidence]    ///////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
         for sentence in sentences:
+            dic.setdefault(sentence.to_plain_string(), [])
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
-                    dic.setdefault(sentence.to_plain_string(), [])
-                    dic[sentence.to_plain_string()].append(f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]')
+                    dic[sentence.to_plain_string()].append(f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                     #f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                     #f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                     print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
-            if v is not None:
+            if len(v) > 0:
                 for tags in v:
-                    f.writelines(f'Tags: {tags} ')
+                    f.writelines(f'Tags: {tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
+                f.writelines(f'X----------------------------------X-------------------------------X \n\n')
 
     colors = {
 
