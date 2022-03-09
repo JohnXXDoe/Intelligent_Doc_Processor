@@ -59,6 +59,38 @@ def searchable_ocr(img):  # From image to searchable PDF
     with open(r'C:\Data\test\Searchable.pdf', 'w+b') as f:
         f.write(pdf)
 
+def table_extraction(PDF, name, pagenums=None):
+    tables, text = camelot.read_pdf(PDF, strip_text='\n', pages=str(extract_no), backend="poppler", split_text=True,
+                                    process_background=True, copy_text=['h', 'v'], line_scale=45,
+                                    layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
+    camelot.plot(tables[0], kind='line')
+    tables.export(r'C:\Data\Output\tables\table.csv', f='csv', compress=True)  # json, excel, html, markdown, sqlite
+    print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
+    tablesfin, line, dic, header = [], '', {}, 0
+    for table in text:
+        para = []
+        for row_index, row in enumerate(table):
+            for col_index, col in enumerate(row):
+                dic.setdefault(f'Col{col_index}', [])
+                if row_index <= header:
+                    if table[row_index][col_index] not in dic.get(f'Col{col_index}', ''):
+                        dic[f'Col{col_index}'].append(table[row_index][col_index])
+                if table[row_index][col_index] in dic.get(f'Col{col_index}', ''):
+                    header = row_index
+                else:
+                    head = ' '.join(dic.get(f'Col{col_index}', ''))
+                    line = f'{head} - {table[row_index][col_index]},'
+                para.append(line)
+            para.append('\n')
+        tabel = ' '.join(para)
+        tablesfin.append(tabel)
+    for table in tablesfin:
+        print(f'\n\n\n ///// After sentencing logic ///// \n{table}\n')
+    if tablesfin:
+        return tablesfin
+    else:
+        return None
+
 
 def img_ocr(location, filename):  # For Image/Scanned PDF to text
     total_text = ''
@@ -110,7 +142,7 @@ def ner(pdf, titles, im_loc):
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
     codec = 'utf-8'
-    laparams = LAParams(char_margin=30, line_margin=2, boxes_flow=1)
+    laparams = LAParams(char_margin=15, line_margin=2, boxes_flow=1)
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
     interpreter = PDFPageInterpreter(rsrcmgr, device)
     fp = open(pdf, 'rb')
@@ -129,7 +161,7 @@ def ner(pdf, titles, im_loc):
                 print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
-                data += img_ocr(im_loc, titles)  # Get OCR form converted image
+                data += img_ocr(im_loc, titles)  # Get OCR from converted image
             else:
                 data += retstr.getvalue().decode('ascii', 'ignore')
                 data = data.replace('\x0c', ' ')
