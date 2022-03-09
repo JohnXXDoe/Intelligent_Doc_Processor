@@ -47,7 +47,7 @@ def pdf2img(PDF, name, pagenums=None):
 
         # Save the image of the page in system
         page.save(r'C:/Data/Output/OCR/images/' + filename)
-        #print('Saved page number ' + str(image_counter))
+        # print('Saved page number ' + str(image_counter))
         # Increment the counter to update filename
         image_counter = image_counter + 1
     total_pages = image_counter
@@ -92,6 +92,39 @@ def table_extraction(PDF, name, pagenums=None):
         return None
 
 
+def table_extraction(PDF, name, pagenums=None):
+    tables, text = camelot.read_pdf(PDF, strip_text='\n', pages=str(extract_no), backend="poppler", split_text=True,
+                                    process_background=True, copy_text=['h', 'v'], line_scale=45,
+                                    layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
+    camelot.plot(tables[0], kind='line')
+    tables.export(r'C:\Data\Output\tables\table.csv', f='csv', compress=True)  # json, excel, html, markdown, sqlite
+    print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
+    tablesfin, line, dic, header = [], '', {}, 0
+    for table in text:
+        para = []
+        for row_index, row in enumerate(table):
+            for col_index, col in enumerate(row):
+                dic.setdefault(f'Col{col_index}', [])
+                if row_index <= header:
+                    if table[row_index][col_index] not in dic.get(f'Col{col_index}', ''):
+                        dic[f'Col{col_index}'].append(table[row_index][col_index])
+                if table[row_index][col_index] in dic.get(f'Col{col_index}', ''):
+                    header = row_index
+                else:
+                    head = ' '.join(dic.get(f'Col{col_index}', ''))
+                    line = f'{head} - {table[row_index][col_index]},'
+                para.append(line)
+            para.append('\n')
+        tabel = ' '.join(para)
+        tablesfin.append(tabel)
+    for table in tablesfin:
+        print(f'\n\n\n ///// After sentencing logic ///// \n{table}\n')
+    if tablesfin:
+        return tablesfin
+    else:
+        return None
+
+
 def img_ocr(location, filename):  # For Image/Scanned PDF to text
     total_text = ''
     for page in tqdm(range(1, total_pages), desc='Converting images to text. . .'):
@@ -100,7 +133,8 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         reader = easyocr.Reader(['en'],
                                 recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
         result = reader.readtext(loc, height_ths=0.2,
-                                 ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2, x_ths=50)
+                                 ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2,
+                                 x_ths=50)
 
         # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
@@ -121,7 +155,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
         for (bbox, text) in result:  # , prob
-            total_text += str(text)+'\n'
+            total_text += str(text) + '\n'
             file.write(str(text))
             file.write('\n')
         file.close()
@@ -129,8 +163,9 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
         cv2.waitKey(20)
-    #print(f'FINAL PAGE TEXT : {total_text}')
+    # print(f'FINAL PAGE TEXT : {total_text}')
     return str(total_text)
+
 
 def ner(pdf, titles, im_loc):
     i = 1
@@ -165,7 +200,7 @@ def ner(pdf, titles, im_loc):
             else:
                 data += retstr.getvalue().decode('ascii', 'ignore')
                 data = data.replace('\x0c', ' ')
-                #print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
+                # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
             retstr.truncate(0)
             retstr.seek(0)
         pagenum += 1
@@ -183,7 +218,7 @@ def ner(pdf, titles, im_loc):
     # LOG
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = {}    # Declare dictionary for removing duplicate sentences
+    dic = {}  # Declare dictionary for removing duplicate sentences
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -201,9 +236,10 @@ def ner(pdf, titles, im_loc):
             dic.setdefault(sentence.to_plain_string(), [])
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
-                    dic[sentence.to_plain_string()].append(f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
-                    #f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                    #f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                    dic[sentence.to_plain_string()].append(
+                        f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
+                    # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                    # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                     print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
