@@ -24,10 +24,10 @@ import tempfile
 import webbrowser
 
 
-def pdf2img(PDF, name, pagenums=None):
+def pdf2img(pdf, name, pagenums=None):
     # print(len(PDF))
     global total_pages
-    pages = convert_from_path(PDF, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
+    pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
                               last_page=pagenums)
 
     #
@@ -47,7 +47,7 @@ def pdf2img(PDF, name, pagenums=None):
 
         # Save the image of the page in system
         page.save(r'C:/Data/Output/OCR/images/' + filename)
-        #print('Saved page number ' + str(image_counter))
+        # print('Saved page number ' + str(image_counter))
         # Increment the counter to update filename
         image_counter = image_counter + 1
     total_pages = image_counter
@@ -68,7 +68,8 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         reader = easyocr.Reader(['en'],
                                 recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
         result = reader.readtext(loc, height_ths=0.2,
-                                 ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2, x_ths=50)
+                                 ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2,
+                                 x_ths=50)
 
         # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
@@ -89,7 +90,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
         for (bbox, text) in result:  # , prob
-            total_text += str(text)+'\n'
+            total_text += str(text) + '\n'
             file.write(str(text))
             file.write('\n')
         file.close()
@@ -97,8 +98,9 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
         cv2.waitKey(20)
-    #print(f'FINAL PAGE TEXT : {total_text}')
+    # print(f'FINAL PAGE TEXT : {total_text}')
     return str(total_text)
+
 
 def ner(pdf, titles, im_loc):
     i = 1
@@ -131,17 +133,14 @@ def ner(pdf, titles, im_loc):
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR form converted image
             else:
-                data += retstr.getvalue().decode('ascii', 'ignore')
+                data += retstr.getvalue().decode('ascii', 'ignore')  # Add BytesIO data to 'data' variable
                 data = data.replace('\x0c', ' ')
-                #print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
-            retstr.truncate(0)
-            retstr.seek(0)
+                # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
+            retstr.truncate(0)  # Clear BytesIO
+            retstr.seek(0)  # Clear BytesIO
         pagenum += 1
         pbar.update(1)
     pbar.close()
-    # data = retstr.getvalue()
-    # encoded_string = data.encode("ascii", "ignore")
-    # clean = encoded_string.decode()
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
@@ -151,7 +150,7 @@ def ner(pdf, titles, im_loc):
     # LOG
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = {}    # Declare dictionary for removing duplicate sentences
+    dic = {}  # Declare dictionary for removing duplicate sentences
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -166,17 +165,16 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
         for sentence in sentences:
-            dic.setdefault(sentence.to_plain_string(), [])
+            dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
-                    dic[sentence.to_plain_string()].append(f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
-                    #f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                    #f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                    dic[sentence.to_plain_string()].append(
+                        f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                     print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
             if len(v) > 0:
-                res = list(OrderedDict.fromkeys(v))
+                res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 for tags in res:
                     f.writelines(f'Tags: {tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
