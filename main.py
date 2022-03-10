@@ -8,7 +8,6 @@ from tqdm import tqdm
 import easyocr
 from pdf2image import convert_from_path  # For scanned PDFs
 from collections import OrderedDict
-from pdfminer import high_level  # Convert text PDF to text
 from pdfminer import pdfpage
 import cv2
 import pytesseract
@@ -24,10 +23,10 @@ import tempfile
 import webbrowser
 
 
-def pdf2img(PDF, name, pagenums=None):
+def pdf2img(pdf, name, pagenums=None):
     # print(len(PDF))
     global total_pages
-    pages = convert_from_path(PDF, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
+    pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
                               last_page=pagenums)
 
     #
@@ -59,8 +58,9 @@ def searchable_ocr(img):  # From image to searchable PDF
     with open(r'C:\Data\test\Searchable.pdf', 'w+b') as f:
         f.write(pdf)
 
-def table_extraction(PDF, name, pagenums=None):
-    tables, text = camelot.read_pdf(PDF, strip_text='\n', pages=str(extract_no), backend="poppler", split_text=True,
+
+def table_extraction(pdf, name, page):
+    tables, text = camelot.read_pdf(pdf, strip_text='\n', pages=str(page), backend="poppler", split_text=True,
                                     process_background=True, copy_text=['h', 'v'], line_scale=45,
                                     layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
     camelot.plot(tables[0], kind='line')
@@ -68,7 +68,7 @@ def table_extraction(PDF, name, pagenums=None):
     print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
     tablesfin, line, dic, header = [], '', {}, 0
     for table in text:
-        para = []
+        para, tables_list = [], []
         for row_index, row in enumerate(table):
             for col_index, col in enumerate(row):
                 dic.setdefault(f'Col{col_index}', [])
@@ -82,45 +82,14 @@ def table_extraction(PDF, name, pagenums=None):
                     line = f'{head} - {table[row_index][col_index]},'
                 para.append(line)
             para.append('\n')
+            lines = ' '.join(para)
+        tables_list.append(lines)
         tabel = ' '.join(para)
         tablesfin.append(tabel)
     for table in tablesfin:
-        print(f'\n\n\n ///// After sentencing logic ///// \n{table}\n')
-    if tablesfin:
-        return tablesfin
-    else:
-        return None
-
-
-def table_extraction(PDF, name, pagenums=None):
-    tables, text = camelot.read_pdf(PDF, strip_text='\n', pages=str(extract_no), backend="poppler", split_text=True,
-                                    process_background=True, copy_text=['h', 'v'], line_scale=45,
-                                    layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
-    camelot.plot(tables[0], kind='line')
-    tables.export(r'C:\Data\Output\tables\table.csv', f='csv', compress=True)  # json, excel, html, markdown, sqlite
-    print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
-    tablesfin, line, dic, header = [], '', {}, 0
-    for table in text:
-        para = []
-        for row_index, row in enumerate(table):
-            for col_index, col in enumerate(row):
-                dic.setdefault(f'Col{col_index}', [])
-                if row_index <= header:
-                    if table[row_index][col_index] not in dic.get(f'Col{col_index}', ''):
-                        dic[f'Col{col_index}'].append(table[row_index][col_index])
-                if table[row_index][col_index] in dic.get(f'Col{col_index}', ''):
-                    header = row_index
-                else:
-                    head = ' '.join(dic.get(f'Col{col_index}', ''))
-                    line = f'{head} - {table[row_index][col_index]},'
-                para.append(line)
-            para.append('\n')
-        tabel = ' '.join(para)
-        tablesfin.append(tabel)
-    for table in tablesfin:
-        print(f'\n\n\n ///// After sentencing logic ///// \n{table}\n')
-    if tablesfin:
-        return tablesfin
+        print(f'\n ------ TABLES ------\n {table}\n')
+    if tables_list:
+        return tables_list
     else:
         return None
 
@@ -174,6 +143,7 @@ def ner(pdf, titles, im_loc):
     tagger = SequenceTagger.load(
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt')  # all-fixed-roberta-base-resume
     print(tagger)
+    tables = []
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
     codec = 'utf-8'
@@ -191,6 +161,10 @@ def ner(pdf, titles, im_loc):
 
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
         if pagenum is not None:
+            table_list = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
+            if table_list:
+                for table in table_list:
+                    tables.append(table)  # Save tables in universal 'tables' list
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
                 print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
@@ -290,7 +264,7 @@ if __name__ == '__main__':
 
     # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
     PDF_file = f'C:/Data/test/{pdfname}.pdf'
-    img_loc = r'C:\Data\Output\OCR\images'
+    img_loc = r'C:/Data/Output/OCR/images'
 
     # pdf2img(PDF_file, pdfname)
     # img_ocr(img_loc, pdfname)
