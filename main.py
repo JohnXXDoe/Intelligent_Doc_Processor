@@ -1,9 +1,12 @@
 import csv
 import camelot
 import argparse
+
+from flair.data import Sentence
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import resolve1
+from segtok.segmenter import split_single
 from tqdm import tqdm
 import easyocr
 from pdf2image import convert_from_path  # For scanned PDFs
@@ -61,15 +64,14 @@ def searchable_ocr(img):  # From image to searchable PDF
 
 def table_extraction(pdf, name, page):
     tables, text = camelot.read_pdf(pdf, strip_text='\n', pages=str(page), backend="poppler", split_text=True,
-                                    process_background=True, copy_text=['h', 'v'], line_scale=45,
+                                    process_background=False, copy_text=['h', 'v'], line_scale=60,
                                     layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
-    camelot.plot(tables[0], kind='line')
-    tables.export(r'C:\Data\Output\tables\table.csv', f='csv', compress=True)  # json, excel, html, markdown, sqlite
-    print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
-    tablesfin, line, dic, header = [], '', {}, 0
+    tables.export(f'C:/Data/Output/tables/{name}table.html', f='html', compress=False)  # json, excel, html, markdown, sqlite
+    #print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
+    tablesfin, line, dic, header, tables_list = [], '', {}, 0, []
     for table in text:
-        para, tables_list = [], []
         for row_index, row in enumerate(table):
+            para = []
             for col_index, col in enumerate(row):
                 dic.setdefault(f'Col{col_index}', [])
                 if row_index <= header:
@@ -81,15 +83,15 @@ def table_extraction(pdf, name, page):
                     head = ' '.join(dic.get(f'Col{col_index}', ''))
                     line = f'{head} - {table[row_index][col_index]},'
                 para.append(line)
-            para.append('\n')
             lines = ' '.join(para)
-        tables_list.append(lines)
-        tabel = ' '.join(para)
-        tablesfin.append(tabel)
-    for table in tablesfin:
-        print(f'\n ------ TABLES ------\n {table}\n')
-    if tables_list:
-        return tables_list
+            tables_list.append(lines)
+        tablesfin.append(tables_list)
+
+    #for table in tablesfin:
+        #print(f'\n ------ TABLES ------\n {table}\n')
+
+    if tablesfin:
+        return tablesfin
     else:
         return None
 
@@ -138,11 +140,11 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
 
 def ner(pdf, titles, im_loc):
     i = 1
-    sentences = []
+    table_sent = []
     data = ''
     tagger = SequenceTagger.load(
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt')  # all-fixed-roberta-base-resume
-    print(tagger)
+    #print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
@@ -161,9 +163,9 @@ def ner(pdf, titles, im_loc):
 
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
         if pagenum is not None:
-            table_list = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
-            if table_list:
-                for table in table_list:
+            page_tables = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
+            if page_tables:
+                for table in page_tables:
                     tables.append(table)  # Save tables in universal 'tables' list
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
@@ -185,6 +187,13 @@ def ner(pdf, titles, im_loc):
     # clean = encoded_string.decode()
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
+
+    for pages in tqdm(tables, desc=f'Predicting Tables . . .'):
+        for table_no, multi_table in enumerate(pages):
+            table_sent.append(Sentence(multi_table, use_tokenizer=True))
+
+    for table_lines in table_sent:
+        tagger.predict(table_lines)
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
         tagger.predict(sentence)
 
@@ -223,6 +232,31 @@ def ner(pdf, titles, im_loc):
                     f.writelines(f'Tags: {tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
+        tablefile = f'C:/Data/Output/{titles}_table.txt'
+        dic2 = {}  # Declare dictionary for removing duplicate sentences
+        with open(tablefile, 'w', newline='', encoding="utf-8") as f:
+            f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
+            f.writelines(f'/////////////////////  T A B L E S     R E S U L T  /////////////////////////// \n')
+            f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
+            f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
+
+            for sent in table_sent:
+                dic2.setdefault(sent.to_plain_string(), [])
+                for entity in sent.get_spans('ner', min_score=threshold):
+                    if str(entity.tag) != 'tenderid':
+                        dic2[sent.to_plain_string()].append(
+                            f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
+                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                        print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
+            print(f'|______________________________________________________________________________|')
+            for k, v in dic2.items():
+                if len(v) > 0:
+                    res = list(OrderedDict.fromkeys(v))
+                    for tags in res:
+                        f.writelines(f'Tags: {tags}')
+                    f.writelines(f'\nSentence : {k} \n\n')
+                    f.writelines(f'X----------------------------------X-------------------------------X \n\n')
 
     colors = {
 
