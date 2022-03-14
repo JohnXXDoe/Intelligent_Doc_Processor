@@ -27,6 +27,13 @@ import webbrowser
 
 
 def pdf2img(pdf, name, pagenums=None):
+    '''
+
+    :param pdf: Pdf location
+    :param name: Pdf name for image file
+    :param pagenums: page number to be converted
+    :return: save pages as jpeg images
+    '''
     # print(len(PDF))
     global total_pages
     pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
@@ -66,8 +73,9 @@ def table_extraction(pdf, name, page):
     tables, text = camelot.read_pdf(pdf, strip_text='\n', pages=str(page), backend="poppler", split_text=True,
                                     process_background=False, copy_text=['h', 'v'], line_scale=60,
                                     layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
-    tables.export(f'C:/Data/Output/tables/{name}table.html', f='html', compress=False)  # json, excel, html, markdown, sqlite
-    #print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
+    tables.export(f'C:/Data/Output/tables/{name}table.html', f='html',
+                  compress=False)  # json, excel, html, markdown, sqlite
+    # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
     tablesfin, line, dic, header, tables_list = [], '', {}, 0, []
     for table in text:
         for row_index, row in enumerate(table):
@@ -87,8 +95,8 @@ def table_extraction(pdf, name, page):
             tables_list.append(lines)
         tablesfin.append(tables_list)
 
-    #for table in tablesfin:
-        #print(f'\n ------ TABLES ------\n {table}\n')
+    # for table in tablesfin:
+    # print(f'\n ------ TABLES ------\n {table}\n')
 
     if tablesfin:
         return tablesfin
@@ -98,7 +106,7 @@ def table_extraction(pdf, name, page):
 
 def img_ocr(location, filename):  # For Image/Scanned PDF to text
     total_text = ''
-    for page in tqdm(range(1, total_pages), desc='Converting images to text. . .'):
+    for page in range(1, total_pages):  # tqdm(range(1, total_pages), desc='Converting images to text. . .'):
         loc = f'{location}/{filename}_{page}.png'
         image = cv2.imread(loc)
         reader = easyocr.Reader(['en'],
@@ -144,7 +152,7 @@ def ner(pdf, titles, im_loc):
     data = ''
     tagger = SequenceTagger.load(
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt')  # all-fixed-roberta-base-resume
-    #print(tagger)
+    # print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
@@ -163,17 +171,17 @@ def ner(pdf, titles, im_loc):
 
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
         if pagenum is not None:
-            page_tables = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
-            if page_tables:
-                for table in page_tables:
-                    tables.append(table)  # Save tables in universal 'tables' list
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
-                print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
+                # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
             else:
+                page_tables = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
+                if page_tables:
+                    for table in page_tables:
+                        tables.append(table)  # Save tables in universal 'tables' list
                 data += retstr.getvalue().decode('ascii', 'ignore')
                 data = data.replace('\x0c', ' ')
                 # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
@@ -308,4 +316,5 @@ if __name__ == '__main__':
 '''
 CLI command :
 # // E:\PycharmProjects\DL\venv\scripts\python.exe E:\PycharmProjects\DL\Doc_IMG-OCR\main.py -c 0.7 -f EIL //
+pdftopng
 '''
