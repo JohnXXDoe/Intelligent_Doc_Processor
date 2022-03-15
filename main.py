@@ -3,6 +3,7 @@ import camelot
 import argparse
 
 import huggingface_hub
+
 TRANSFORMERS_OFFLINE = 1
 
 from flair.data import Sentence
@@ -72,10 +73,16 @@ def searchable_ocr(img):  # From image to searchable PDF
         f.write(pdf)
 
 
-def table_extraction(pdf, name, page):
-    tables, text = camelot.read_pdf(pdf, strip_text='\n', pages=str(page), backend="poppler", split_text=True,
-                                    process_background=False, copy_text=['h', 'v'], line_scale=60,
-                                    layout_kwargs={'char_margin': 1, 'line_margin': 0.2, 'boxes_flow': 1})
+def table_extraction(pdf, name, page, type):
+    if type == 'lattice':
+        tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
+                                        split_text=True,
+                                        process_background=False, copy_text=['h', 'v'], line_scale=60,
+                                        layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
+                                                       'boxes_flow': 1})  # Text based page
+    else:
+        tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
+
     tables.export(f'C:/Data/Output/tables/{name}table.html', f='html',
                   compress=False)  # json, excel, html, markdown, sqlite
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
@@ -180,16 +187,24 @@ def ner(pdf, titles, im_loc):
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
-            else:
                 try:
-                    page_tables = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
+                    page_tables = table_extraction(pdf, titles, pagenum,
+                                               'lattice_ocr')  # Run OCR based table extraction
                 except IndexError:
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
-                if page_tables:
-                    for table in page_tables:
-                        tables.append(table)  # Save tables in universal 'tables' list
-                data += retstr.getvalue().decode('ascii', 'ignore')
-                data = data.replace('\x0c', ' ')
+            else:
+                try:
+                    page_tables = table_extraction(pdf, titles, pagenum,
+                                                   'lattice')  # Returns list of tables in the specified page
+                except IndexError:
+                    print(f'Page  {pagenum} Table not readable. Skipping it.')
+
+                data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
+                data = data.replace('\x0c', ' ')    # Remove useless character
+            if page_tables:
+                for table in page_tables:
+                    tables.append(table)  # Save tables in universal 'tables' list
+
                 # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
             retstr.truncate(0)
             retstr.seek(0)
