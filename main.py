@@ -2,6 +2,9 @@ import csv
 import camelot
 import argparse
 
+import huggingface_hub
+TRANSFORMERS_OFFLINE = 1
+
 from flair.data import Sentence
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
@@ -178,7 +181,10 @@ def ner(pdf, titles, im_loc):
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
             else:
-                page_tables = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
+                try:
+                    page_tables = table_extraction(pdf, titles, pagenum)  # Returns list of tables in the specified page
+                except IndexError:
+                    print(f'Page  {pagenum} Table not readable. Skipping it.')
                 if page_tables:
                     for table in page_tables:
                         tables.append(table)  # Save tables in universal 'tables' list
