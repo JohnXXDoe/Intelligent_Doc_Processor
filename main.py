@@ -211,9 +211,6 @@ def ner(pdf, titles, im_loc):
         pagenum += 1
         pbar.update(1)
     pbar.close()
-    # data = retstr.getvalue()
-    # encoded_string = data.encode("ascii", "ignore")
-    # clean = encoded_string.decode()
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
 
@@ -245,7 +242,7 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
         for sentence in sentences:
-            dic.setdefault(sentence.to_plain_string(), [])
+            dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
                     dic[sentence.to_plain_string()].append(
@@ -256,7 +253,7 @@ def ner(pdf, titles, im_loc):
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
             if len(v) > 0:
-                res = list(OrderedDict.fromkeys(v))
+                res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 for tags in res:
                     f.writelines(f'Tags: {tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
