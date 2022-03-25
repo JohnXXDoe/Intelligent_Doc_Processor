@@ -31,13 +31,14 @@ import webbrowser
 
 
 def pdf2img(pdf, name, pagenums=None):
-    '''
-
+    """
+    Takes PDF page and converts it to png image for running OCR
     :param pdf: Pdf location
     :param name: Pdf name for image file
     :param pagenums: page number to be converted
     :return: save pages as jpeg images
-    '''
+    """
+
     # print(len(PDF))
     global total_pages
     pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
@@ -66,14 +67,15 @@ def pdf2img(pdf, name, pagenums=None):
     total_pages = image_counter
 
 
-def searchable_ocr(img):  # From image to searchable PDF
-    pdf = pytesseract.image_to_pdf_or_hocr(img, config='--oem 1', extension='pdf')
-    print(pytesseract.image_to_string(img))
-    with open(r'C:\Data\test\Searchable.pdf', 'w+b') as f:
-        f.write(pdf)
-
-
 def table_extraction(pdf, name, page, type):
+    """
+    Find any lattice tables in the page and convert its rows to syntactically sane text sentences for NER run
+    :param pdf: Location of PDF file
+    :param name: Name of PDF file
+    :param page: Page number to find tables in
+    :param type: If OCR or regular PDF page
+    :return: Text string that contains row vise sentences
+    """
     if type == 'lattice':
         tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
                                         split_text=True,
@@ -115,6 +117,12 @@ def table_extraction(pdf, name, page, type):
 
 
 def img_ocr(location, filename):  # For Image/Scanned PDF to text
+    """
+    Opens PNG image (single page) and runs OCR model to extract text
+    :param location: Location of PNG image
+    :param filename: Name of PNG image
+    :return: Text extracted from scanned image (string)
+    """
     total_text = ''
     for page in range(1, total_pages):  # tqdm(range(1, total_pages), desc='Converting images to text. . .'):
         loc = f'{location}/{filename}_{page}.png'
@@ -156,7 +164,28 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
     return str(total_text)
 
 
+def read_dic():
+    """
+    Read dictionary mappings for converting entity names to Normal text
+    :return: None
+    """
+    global key_mappings
+    key_mappings = {}
+    with open('./Outputs/EntityDic.text', 'r') as f:
+        for line in f:
+            key, value = line.split(',')
+            key_mappings.fromkeys(key)
+            key_mappings[key] = value
+
+
 def ner(pdf, titles, im_loc):
+    """
+    Takes PDF runs it page by page to extract its text using OCR or text extraction to run NER model and save its output as text summary and temp HTML render
+    :param pdf: PDF file location
+    :param titles: Name of PDF file
+    :param im_loc: Location for saving PNG image in case of scanned page
+    :return: None
+    """
     i = 1
     table_sent = []
     data = ''
@@ -175,6 +204,7 @@ def ner(pdf, titles, im_loc):
     document = PDFDocument(parser)  # For getting total pages
     total_pages = resolve1(document.catalog['Pages'])['Count']  # For making progress bar
     pbar = tqdm(total=total_pages, desc='Reading PDF')
+
     ##############
     # Prediction
     ##############
@@ -224,10 +254,10 @@ def ner(pdf, titles, im_loc):
         tagger.predict(sentence)
 
     ###################
-    # LOG
+    # LOG OUTPUT
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = {}  # Declare dictionary for removing duplicate sentences
+    dic = OrderedDict  # Declare dictionary for removing duplicate sentences
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -237,7 +267,7 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////  E X T R A C T I O N    R E S U L T  //////////////////////// \n')
-        f.writelines(f'//////////////////      Text, Entity - [Confidence]    ///////////////////////// \n')
+        f.writelines(f'//////////////////     Text, Entity - [Confidence]     ///////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
@@ -245,6 +275,15 @@ def ner(pdf, titles, im_loc):
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
+
+                    '''
+                    # Add entity name normalization logic using dictionaries
+                    if entity.tag in key_mappings:
+                        OG_ent = key_mappings[entity.tag]
+                    dic[sentence.to_plain_string()].append(
+                        f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
+                    '''
+
                     dic[sentence.to_plain_string()].append(
                         f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                     # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
@@ -298,6 +337,7 @@ def ner(pdf, titles, im_loc):
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float,
                         default=-1)
@@ -331,8 +371,7 @@ if __name__ == '__main__':
     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
     ner(PDF_file, pdfname, img_loc)
 
-'''
+"""
 CLI command :
-# // E:\PycharmProjects\DL\venv\scripts\python.exe E:\PycharmProjects\DL\Doc_IMG-OCR\main.py -c 0.7 -f EIL //
-pdftopng
-'''
+                E:\PycharmProjects\DL\venv\scripts\python.exe E:\PycharmProjects\DL\Doc_IMG-OCR\main.py -c 0.7 -f EIL //
+"""
