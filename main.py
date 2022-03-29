@@ -77,11 +77,16 @@ def table_extraction(pdf, name, page, type):
     :return: Text string that contains row vise sentences
     """
     if type == 'lattice':
-        tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
-                                        split_text=True,
-                                        process_background=False, copy_text=['h', 'v'], line_scale=60,
-                                        layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
-                                                       'boxes_flow': 1})  # Text based page
+        try:
+            tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
+                                            split_text=True,
+                                            process_background=False, copy_text=['h', 'v'], line_scale=60,
+                                            layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
+                                                           'boxes_flow': 1})  # Text based page
+        except ZeroDivisionError:   # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
+                                    # float division by zero
+            print('Zero Division Error')
+            return None
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
 
@@ -190,7 +195,7 @@ def ner(pdf, titles, im_loc):
     table_sent = []
     data = ''
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base\best-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base-April\best-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
@@ -219,9 +224,10 @@ def ner(pdf, titles, im_loc):
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
-                                               'lattice_ocr')  # Run OCR based table extraction
-                except IndexError:
+                                                   'lattice_ocr')  # Run OCR based table extraction
+                except IndexError:  # Outer line missing in table
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
+                    continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
@@ -230,7 +236,7 @@ def ner(pdf, titles, im_loc):
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
-                data = data.replace('\x0c', ' ')    # Remove useless character
+                data = data.replace('\x0c', ' ')  # Remove useless character
             if page_tables:
                 for table in page_tables:
                     tables.append(table)  # Save tables in universal 'tables' list
@@ -257,7 +263,7 @@ def ner(pdf, titles, im_loc):
     # LOG OUTPUT
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = OrderedDict  # Declare dictionary for removing duplicate sentences
+    dic = {}  # Declare dictionary for removing duplicate sentences
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -275,7 +281,6 @@ def ner(pdf, titles, im_loc):
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) != 'tenderid':
-
                     '''
                     # Add entity name normalization logic using dictionaries
                     if entity.tag in key_mappings:
@@ -337,7 +342,6 @@ def ner(pdf, titles, im_loc):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float,
                         default=-1)
