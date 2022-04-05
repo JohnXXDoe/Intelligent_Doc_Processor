@@ -294,7 +294,7 @@ def ner(pdf, titles, im_loc):
                         print(f'Cable Type enitity detected score - {entity.text}')
                         for x in cable_list:
                             if x in str(entity.text.lower()):  # If cable word is there in the extracted entity
-                                print('Cable Type 1 set')
+                                print('======= Cable Type set =======')
                                 cable_flag = 1
                                 break
                             else:   # Else set flag = 0
