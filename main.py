@@ -83,8 +83,8 @@ def table_extraction(pdf, name, page, type):
                                             process_background=False, copy_text=['h', 'v'], line_scale=60,
                                             layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
                                                            'boxes_flow': 1})  # Text based page
-        except ZeroDivisionError:   # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
-                                    # float division by zero
+        except ZeroDivisionError:  # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
+            # float division by zero
             print('Zero Division Error')
             return None
     else:
@@ -195,7 +195,7 @@ def ner(pdf, titles, im_loc):
     table_sent = []
     data = ''
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base-April\best-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-base-lrg/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
@@ -215,7 +215,7 @@ def ner(pdf, titles, im_loc):
     ##############
 
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        if pagenum is not None:
+        if pagenum is not None:  # is not None:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
@@ -277,10 +277,12 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
+        cable_list = ['armoured cable', 'power cable', 'cable', 'lt', 'lt cable', 'cables']
+        cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) != 'tenderid':
+                if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                     '''
                     # Add entity name normalization logic using dictionaries
                     if entity.tag in key_mappings:
@@ -288,12 +290,22 @@ def ner(pdf, titles, im_loc):
                     dic[sentence.to_plain_string()].append(
                         f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
                     '''
+                    if str(entity.tag) == 'cableItype':
+                        print(f'Cable Type enitity detected score - {entity.text}')
+                        for x in cable_list:
+                            if x in str(entity.text.lower()):  # If cable word is there in the extracted entity
+                                print('Cable Type 1 set')
+                                cable_flag = 1
+                                break
+                            else:   # Else set flag = 0
+                                cable_flag = 0
+                    if cable_flag == 1:
+                        dic[sentence.to_plain_string()].append(
+                            f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
+                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                        print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
 
-                    dic[sentence.to_plain_string()].append(
-                        f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
-                    # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                    # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                    print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
             if len(v) > 0:
@@ -313,7 +325,7 @@ def ner(pdf, titles, im_loc):
             for sent in table_sent:
                 dic2.setdefault(sent.to_plain_string(), [])
                 for entity in sent.get_spans('ner', min_score=threshold):
-                    if str(entity.tag) != 'tenderid':
+                    if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                         dic2[sent.to_plain_string()].append(
                             f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
