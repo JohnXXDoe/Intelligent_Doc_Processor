@@ -277,7 +277,7 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
-        cable_list = ['armoured cable', 'power cable', 'cable', 'lt', 'lt cable', 'cables']
+        cable_list = ['armoured cable', 'power cable', 'signal cable', '']#'cable', 'lt', 'lt cable', 'cables']
         cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
@@ -290,18 +290,19 @@ def ner(pdf, titles, im_loc):
                     dic[sentence.to_plain_string()].append(
                         f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
                     '''
-                    if str(entity.tag) == 'cableItype':
-                        print(f'Cable Type enitity detected score - {entity.text}')
+                    if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
+                        print(f'Cable Type enitity detected  - {entity.text}')
                         for x in cable_list:
                             if x in str(entity.text.lower()):  # If cable word is there in the extracted entity
                                 print('======= Cable Type set =======')
                                 cable_flag = 1
+                                cable_name = entity.text
                                 break
-                            else:   # Else set flag = 0
+                            else:  # Else set flag = 0
                                 cable_flag = 0
                     if cable_flag == 1:
                         dic[sentence.to_plain_string()].append(
-                            f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
+                            f'>{cable_name}\n Tag: >> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                         # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                         print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
@@ -311,11 +312,11 @@ def ner(pdf, titles, im_loc):
             if len(v) > 0:
                 res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 for tags in res:
-                    f.writelines(f'Tags: {tags}')
+                    f.writelines(f'Cable Name: {tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
         tablefile = f'C:/Data/Output/{titles}_table.txt'
-        dic2 = {}  # Declare dictionary for removing duplicate sentences
+        dic2 = {}  # Declare dictionary for removing duplicate sentences in tables
         with open(tablefile, 'w', newline='', encoding="utf-8") as f:
             f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
             f.writelines(f'/////////////////////  T A B L E S     R E S U L T  /////////////////////////// \n')
