@@ -195,7 +195,7 @@ def ner(pdf, titles, im_loc):
     table_sent = []
     data = ''
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-base-lrg/final-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-lrg-6-04/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
@@ -302,7 +302,7 @@ def ner(pdf, titles, im_loc):
                                 cable_flag = 0
                     if cable_flag == 1:
                         dic[sentence.to_plain_string()].append(
-                            f'>{cable_name}\n Tag: >> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
+                            f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                         # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                         print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
