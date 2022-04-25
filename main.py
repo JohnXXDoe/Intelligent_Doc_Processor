@@ -44,8 +44,7 @@ def pdf2img(pdf, name, pagenums=None):
     pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
                               last_page=pagenums)
 
-    #
-    # # Counter to store images of each page of PDF to image
+    # Counter to store images of each page of PDF to image
     image_counter = 1
     #
     # Iterate through all the pages stored above
@@ -72,7 +71,7 @@ def table_extraction(pdf, name, page, type):
     Find any lattice tables in the page and convert its rows to syntactically sane text sentences for NER run
     :param pdf: Location of PDF file
     :param name: Name of PDF file
-    :param page: Page number to find tables in
+    :param page: Page numbers to find tables in
     :param type: If OCR or regular PDF page
     :return: Text string that contains row vise sentences
     """
@@ -90,7 +89,7 @@ def table_extraction(pdf, name, page, type):
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
 
-    tables.export(f'C:/Data/Output/tables/{name}table.html', f='html',
+    tables.export(f'C:/Data/Output/tables/{name}table.csv', f='csv',
                   compress=False)  # json, excel, html, markdown, sqlite
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
     tablesfin, line, dic, header, tables_list = [], '', {}, 0, []
@@ -133,7 +132,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         loc = f'{location}/{filename}_{page}.png'
         image = cv2.imread(loc)
         reader = easyocr.Reader(['en'],
-                                recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
+                                recog_network='custom_example')  # recog_network='custom_example' this needs to run only once to load the model into memory
         result = reader.readtext(loc, height_ths=0.2,
                                  ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2,
                                  x_ths=50)
@@ -153,7 +152,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
             # with the OCR'd text itself
             cv2.rectangle(image, tl, br, (0, 0, 255), 4)
             cv2.putText(image, text, (tl[0], tl[1] - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 90, 200), 8)
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 90, 200), 5)
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
         for (bbox, text) in result:  # , prob
@@ -164,7 +163,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         # show the output image
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
-        cv2.waitKey(20)
+        cv2.waitKey(2)
     # print(f'FINAL PAGE TEXT : {total_text}')
     return str(total_text)
 
@@ -195,7 +194,7 @@ def ner(pdf, titles, im_loc):
     table_sent = []
     data = ''
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-lrg-6-04/final-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
@@ -218,21 +217,21 @@ def ner(pdf, titles, im_loc):
         if pagenum is not None:  # is not None:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
-                # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
+                print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')  # Run OCR based table extraction
-                except IndexError:  # Outer line missing in table
+                except IndexError or ValueError:  # Outer line missing in table
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
                     continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
-                except IndexError:
+                except IndexError or ValueError:
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
@@ -277,7 +276,10 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
-        cable_list = ['armoured cable', 'power cable', 'signal cable', '']#'cable', 'lt', 'lt cable', 'cables']
+        cable_list = ['armoured cable', 'power cable', 'signal cable', 'pvc insulated', 'xlpe insulated', 'insulated '
+                                                                                                          'cable',
+                      'lt cable', 'electric cable', 'ug cable', 'ug cables',
+                      'cables']  # 'cable', 'lt', 'lt cable', 'cables']
         cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
@@ -300,7 +302,7 @@ def ner(pdf, titles, im_loc):
                                 break
                             else:  # Else set flag = 0
                                 cable_flag = 0
-                    if cable_flag == 1:
+                    if cable_flag == 1 and entity.tag != 'cableItype':
                         dic[sentence.to_plain_string()].append(
                             f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
