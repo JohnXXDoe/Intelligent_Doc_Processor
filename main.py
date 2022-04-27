@@ -224,14 +224,14 @@ def ner(pdf, titles, im_loc):
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')  # Run OCR based table extraction
-                except IndexError or ValueError:  # Outer line missing in table
+                except:  # Outer line missing in table
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
                     continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
-                except IndexError or ValueError:
+                except:
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
