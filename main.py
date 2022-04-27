@@ -89,8 +89,8 @@ def table_extraction(pdf, name, page, type):
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
 
-    tables.export(f'C:/Data/Output/tables/{name}table.csv', f='csv',
-                  compress=False)  # json, excel, html, markdown, sqlite
+    tables.export(f'C:/Data/Output/{name} tables.csv', f='txt',
+                  compress=True)  # json, excel, html, markdown, sqlite, txt
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
     tablesfin, line, dic, header, tables_list = [], '', {}, 0, []
     for table in text:
@@ -226,12 +226,14 @@ def ner(pdf, titles, im_loc):
                                                    'lattice_ocr')  # Run OCR based table extraction
                 except:  # Outer line missing in table
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
+                    page_tables = None
                     continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
                 except:
+                    page_tables = None
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
@@ -284,6 +286,11 @@ def ner(pdf, titles, im_loc):
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
+
+                #########################################################
+                ######    CUSTOMISATION FOR TENDER SPECIFICATIONS    ####
+                #########################################################
+
                 if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                     '''
                     # Add entity name normalization logic using dictionaries
@@ -302,19 +309,25 @@ def ner(pdf, titles, im_loc):
                                 break
                             else:  # Else set flag = 0
                                 cable_flag = 0
-                    if cable_flag == 1 and entity.tag != 'cableItype':
+                    if entity.tag in ['marking', 'packing']:    # Removing entity output from final text
                         dic[sentence.to_plain_string()].append(
+                            f'Tag: >> {entity.tag} |> {cable_name}')    # Adding specific formatted line to final text file
+                        print(
+                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                        continue
+                    if cable_flag == 1 and entity.tag != 'cableItype':
+                        dic[sentence.to_plain_string()].append(         # Adding specific formatted line to final text file
                             f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                         # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                        print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
+                        print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')      # Debugging/CLI output
 
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
             if len(v) > 0:
                 res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 for tags in res:
-                    f.writelines(f'Cable Name: {tags}')
+                    f.writelines(f'{tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
         tablefile = f'C:/Data/Output/{titles}_table.txt'
@@ -328,7 +341,7 @@ def ner(pdf, titles, im_loc):
             for sent in table_sent:
                 dic2.setdefault(sent.to_plain_string(), [])
                 for entity in sent.get_spans('ner', min_score=threshold):
-                    if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
+                    if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard' and entity.tag != 'cableItype':
                         dic2[sent.to_plain_string()].append(
                             f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
@@ -358,8 +371,8 @@ def ner(pdf, titles, im_loc):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float,
-                        default=-1)
+    parser.add_argument('-c', dest='threshold', help='Default = 0.8  , Limit: [0,1]', type=float,
+                        default=0.8)
     parser.add_argument('-f', dest='pdfname', help='Name of PDF to be processed', type=str)
     args = parser.parse_args()
 
