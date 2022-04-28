@@ -278,17 +278,17 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
-        cable_list = ['armoured cable', 'power cable', 'signal cable', 'pvc insulated', 'xlpe insulated', 'insulated '
-                                                                                                          'cable',
-                      'lt cable', 'electric cable', 'ug cable', 'ug cables',
+        cable_list = ['pvc insulated', 'xlpe insulated',
+                      'cable',
                       'cables']  # 'cable', 'lt', 'lt cable', 'cables']
+        forbidden = ['cable accessory', 'cable accessories']
         cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
 
                 #########################################################
-                ######    CUSTOMISATION FOR TENDER SPECIFICATIONS    ####
+                #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
                 #########################################################
 
                 if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
@@ -302,25 +302,27 @@ def ner(pdf, titles, im_loc):
                     if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
                         print(f'Cable Type enitity detected  - {entity.text}')
                         for x in cable_list:
-                            if x in str(entity.text.lower()):  # If cable word is there in the extracted entity
-                                print('======= Cable Type set =======')
-                                cable_flag = 1
-                                cable_name = entity.text
-                                break
+                            if x in str(entity.text.lower()) and str(entity.text.lower()) != 'cable accessory' and str(entity.text.lower()) != 'cable accessories':  # If cable word is there in the extracted entity
+                                    print(f'======= Cable Type set {x} =======')
+                                    cable_flag = 1
+                                    cable_name = entity.text
+                                    break
                             else:  # Else set flag = 0
                                 cable_flag = 0
-                    if entity.tag in ['marking', 'packing']:    # Removing entity output from final text
-                        dic[sentence.to_plain_string()].append(
-                            f'Tag: >> {entity.tag} |> {cable_name}')    # Adding specific formatted line to final text file
-                        print(
-                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
-                        continue
+
                     if cable_flag == 1 and entity.tag != 'cableItype':
-                        dic[sentence.to_plain_string()].append(         # Adding specific formatted line to final text file
+                        if entity.tag in ['marking', 'packing'] and len(entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
+                            dic[sentence.to_plain_string()].append(
+                                f'Tag: >> {entity.tag} |> {cable_name}')  # Adding specific formatted line to final text file
+                            print(
+                                f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                            continue
+                        dic[sentence.to_plain_string()].append(  # Adding specific formatted line to final text file
                             f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                         # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                        print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')      # Debugging/CLI output
+                        print(
+                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
 
         print(f'|______________________________________________________________________________|')
         for k, v in dic.items():
@@ -341,7 +343,7 @@ def ner(pdf, titles, im_loc):
             for sent in table_sent:
                 dic2.setdefault(sent.to_plain_string(), [])
                 for entity in sent.get_spans('ner', min_score=threshold):
-                    if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard' and entity.tag != 'cableItype':
+                    if str(entity.tag) != 'tenderid' and entity.tag != 'marking' and entity.tag != 'cableItype':
                         dic2[sent.to_plain_string()].append(
                             f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
