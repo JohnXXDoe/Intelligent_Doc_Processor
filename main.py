@@ -194,7 +194,7 @@ def ner(pdf, titles, im_loc):
     table_sent = []
     data = ''
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul/final-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
     rsrcmgr = PDFResourceManager()
@@ -217,7 +217,7 @@ def ner(pdf, titles, im_loc):
         if pagenum is not None:  # is not None:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
-                print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
+                #print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
@@ -281,7 +281,7 @@ def ner(pdf, titles, im_loc):
         cable_list = ['pvc insulated', 'xlpe insulated',
                       'cable',
                       'cables']  # 'cable', 'lt', 'lt cable', 'cables']
-        forbidden = ['cable accessory', 'cable accessories']
+        forbidden = ['accessory', 'accessories']
         cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
