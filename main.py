@@ -79,9 +79,9 @@ def table_extraction(pdf, name, page, type):
         try:
             tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
                                             split_text=True,
-                                            process_background=False, copy_text=['h', 'v'], line_scale=60,
-                                            layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
-                                                           'boxes_flow': 1})  # Text based page
+                                            process_background=False, copy_text=['h', 'v'], line_scale=50)
+                                            # layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
+                                            #                'boxes_flow': 1})  # Text based page
         except ZeroDivisionError:  # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
             # float division by zero
             print('Zero Division Error')
@@ -92,10 +92,10 @@ def table_extraction(pdf, name, page, type):
     tables.export(f'C:/Data/Output/{name} tables.csv', f='txt',
                   compress=True)  # json, excel, html, markdown, sqlite, txt
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
-    tablesfin, line, dic, header, tables_list = [], '', {}, 0, []
+    tablesfin, item, dic, header, table_line = [], '', {}, 0, []
     for table in text:
         for row_index, row in enumerate(table):
-            para = []
+            items = []
             for col_index, col in enumerate(row):
                 dic.setdefault(f'Col{col_index}', [])
                 if row_index <= header:
@@ -105,11 +105,11 @@ def table_extraction(pdf, name, page, type):
                     header = row_index
                 else:
                     head = ' '.join(dic.get(f'Col{col_index}', ''))
-                    line = f'{head} - {table[row_index][col_index]},'
-                para.append(line)
-            lines = ' '.join(para)
-            tables_list.append(lines)
-        tablesfin.append(tables_list)
+                    item = f'{head} - {table[row_index][col_index]},'
+                items.append(item)
+            row_line = ' '.join(items)
+            table_line.append(row_line)
+        tablesfin.append(table_line)
 
     # for table in tablesfin:
     # print(f'\n ------ TABLES ------\n {table}\n')
@@ -197,6 +197,7 @@ def ner(pdf, titles, im_loc):
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
+    open(f"C:/Data/Output/{titles} tables.csv", "w").close()    # Clear/Wipe if there is older version of table.csv
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
     codec = 'utf-8'
@@ -239,9 +240,33 @@ def ner(pdf, titles, im_loc):
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
             if page_tables:
+                tok_table_lines, tok_line, extraction = [], None, []
+                #NEW LOGIC
+                for table in page_tables:
+                    for line in table:
+                        tok_table_lines.append(Sentence(line, use_tokenizer=True))
+                for tok_line in tok_table_lines:
+                    tagger.predict(tok_line)
+                with open(f"C:/Data/Output/{titles} tables.csv", 'a', newline='', encoding="utf-8") as f:
+                    for tok_line in tok_table_lines:
+                        for entity in tok_line.get_spans('ner', min_score=threshold):
+                            if str(entity.tag) != 'tenderid' and entity.tag != 'marking':
+                                print(f'-- Adding table extraction to CSV file --')
+                                extraction.append(f'"{entity.text} , {entity.tag}"')
+                    if extraction:
+                        f.write("-------------------------- , ---------------------- \n")
+                        f.write("Attribute , Type")
+                        f.write("\n")
+                        res = list(OrderedDict.fromkeys(extraction))
+                        for tags in res:
+                            f.write(tags)
+                            f.write("\n")
+                        f.write("\n -------------------------- , ---------------------- \n")
+                '''
+                #OLD LOGIC
                 for table in page_tables:
                     tables.append(table)  # Save tables in universal 'tables' list
-
+                '''
                 # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
             retstr.truncate(0)
             retstr.seek(0)
@@ -250,13 +275,14 @@ def ner(pdf, titles, im_loc):
     pbar.close()
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
-
-    for pages in tqdm(tables, desc=f'Predicting Tables . . .'):
+    '''
+    for pages in tqdm(tables, desc=f'Converting Tables . . .'):
         for table_no, multi_table in enumerate(pages):
             table_sent.append(Sentence(multi_table, use_tokenizer=True))
 
     for table_lines in table_sent:
         tagger.predict(table_lines)
+    '''
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
         tagger.predict(sentence)
 
@@ -325,6 +351,7 @@ def ner(pdf, titles, im_loc):
                             f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
 
         print(f'|______________________________________________________________________________|')
+
         for k, v in dic.items():
             if len(v) > 0:
                 res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
