@@ -154,17 +154,18 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
             cv2.putText(image, text, (tl[0], tl[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 90, 200), 5)
 
-        file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
+        file = open(f"C:/Data/Output/{filename}_OCR.txt", 'a')
         for (bbox, text) in result:  # , prob
             total_text += str(text) + '\n'
             file.write(str(text))
             file.write('\n')
         file.close()
-        # show the output image
+        '''
+        # Show the output image
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
         cv2.waitKey(2)
-    # print(f'FINAL PAGE TEXT : {total_text}')
+        '''
     return str(total_text)
 
 
@@ -197,6 +198,7 @@ def ner(pdf, titles, im_loc):
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
+    open(f"C:/Data/Output/{titles}_OCR.txt", "w").close()  # Clear/Wipe OCR txt file
     open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
@@ -211,7 +213,7 @@ def ner(pdf, titles, im_loc):
     pbar = tqdm(total=total_pages, desc='Reading PDF')
 
     ##############
-    # Prediction
+    # Prediction #
     ##############
 
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
@@ -239,9 +241,14 @@ def ner(pdf, titles, im_loc):
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
+
+            ##################################################################
+            # NEW LOGIC                                                      #
+            # Append table NER extractions to table csv file after each page #
+            ##################################################################
+
             if page_tables:
                 tok_table_lines, tok_line, extraction = [], None, []
-                # NEW LOGIC
                 for table in page_tables:
                     for line in table:
                         tok_table_lines.append(Sentence(line, use_tokenizer=True))
@@ -251,7 +258,7 @@ def ner(pdf, titles, im_loc):
                     for tok_line in tok_table_lines:
                         for entity in tok_line.get_spans('ner', min_score=threshold):
                             if str(entity.tag) != 'tenderid' and entity.tag != 'marking':
-                                print(f'-- Adding table extraction to CSV file --')
+                                #print(f'-- Adding table extraction to CSV file --')
                                 extraction.append(f'"{entity.text} , {entity.tag}"')
                     if extraction:
                         f.write("-------------------------- , ---------------------- \n")
@@ -267,7 +274,6 @@ def ner(pdf, titles, im_loc):
                 for table in page_tables:
                     tables.append(table)  # Save tables in universal 'tables' list
                 '''
-                # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
             retstr.truncate(0)
             retstr.seek(0)
         pagenum += 1
@@ -275,14 +281,7 @@ def ner(pdf, titles, im_loc):
     pbar.close()
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
-    '''
-    for pages in tqdm(tables, desc=f'Converting Tables . . .'):
-        for table_no, multi_table in enumerate(pages):
-            table_sent.append(Sentence(multi_table, use_tokenizer=True))
 
-    for table_lines in table_sent:
-        tagger.predict(table_lines)
-    '''
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
         tagger.predict(sentence)
 
@@ -366,7 +365,7 @@ def ner(pdf, titles, im_loc):
         dic2 = {}  # Declare dictionary for removing duplicate sentences in tables
         with open(tablefile, 'w', newline='', encoding="utf-8") as f:
             f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-            f.writelines(f'/////////////////////  T A B L E S     R E S U L T  /////////////////////////// \n')
+            f.writelines(f'/////////////////////     F I L E S     S A V E D    /////////////////////////// \n')
             f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
             f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
 
