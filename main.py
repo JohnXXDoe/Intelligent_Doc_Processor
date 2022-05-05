@@ -79,9 +79,9 @@ def table_extraction(pdf, name, page, type):
         try:
             tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
                                             split_text=True,
-                                            process_background=False, copy_text=['h', 'v'], line_scale=50)
-                                            # layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
-                                            #                'boxes_flow': 1})  # Text based page
+                                            process_background=False, copy_text=['h', 'v'], line_scale=50, )
+            # layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
+            #                'boxes_flow': 1})  # Text based page
         except ZeroDivisionError:  # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
             # float division by zero
             print('Zero Division Error')
@@ -197,7 +197,7 @@ def ner(pdf, titles, im_loc):
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
-    open(f"C:/Data/Output/{titles} tables.csv", "w").close()    # Clear/Wipe if there is older version of table.csv
+    open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
     codec = 'utf-8'
@@ -218,7 +218,7 @@ def ner(pdf, titles, im_loc):
         if pagenum is not None:  # is not None:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
-                #print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
+                # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
@@ -241,7 +241,7 @@ def ner(pdf, titles, im_loc):
                 data = data.replace('\x0c', ' ')  # Remove useless character
             if page_tables:
                 tok_table_lines, tok_line, extraction = [], None, []
-                #NEW LOGIC
+                # NEW LOGIC
                 for table in page_tables:
                     for line in table:
                         tok_table_lines.append(Sentence(line, use_tokenizer=True))
@@ -307,7 +307,7 @@ def ner(pdf, titles, im_loc):
         cable_list = ['pvc insulated', 'xlpe insulated',
                       'cable',
                       'cables']  # 'cable', 'lt', 'lt cable', 'cables']
-        forbidden = ['accessory', 'accessories']
+        forbidden = ['accessory', 'accessories', 'standard', 'standards', 'cable and accessory', 'cable and accessories']
         cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
@@ -327,17 +327,20 @@ def ner(pdf, titles, im_loc):
                     '''
                     if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
                         print(f'Cable Type enitity detected  - {entity.text}')
-                        for x in cable_list:
-                            if x in str(entity.text.lower()) and str(entity.text.lower()) != 'cable accessory' and str(entity.text.lower()) != 'cable accessories':  # If cable word is there in the extracted entity
-                                    print(f'======= Cable Type set {x} =======')
-                                    cable_flag = 1
-                                    cable_name = entity.text
-                                    break
+                        for x in forbidden:  # Filtering results of Cable Type
+                            if entity.text.lower().find(x) == -1:
+                                for y in cable_list:
+                                    if entity.text.lower().find(y) != -1:
+                                        print(f'======= Cable Type set {x} =======')
+                                        cable_flag = 1
+                                        cable_name = entity.text
+                                        break
                             else:  # Else set flag = 0
                                 cable_flag = 0
 
                     if cable_flag == 1 and entity.tag != 'cableItype':
-                        if entity.tag in ['marking', 'packing'] and len(entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
+                        if entity.tag in ['marking', 'packing'] and len(
+                                entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
                             dic[sentence.to_plain_string()].append(
                                 f'Tag: >> {entity.tag} |> {cable_name}')  # Adding specific formatted line to final text file
                             print(
