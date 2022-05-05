@@ -44,8 +44,7 @@ def pdf2img(pdf, name, pagenums=None):
     pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
                               last_page=pagenums)
 
-    #
-    # # Counter to store images of each page of PDF to image
+    # Counter to store images of each page of PDF to image
     image_counter = 1
     #
     # Iterate through all the pages stored above
@@ -72,7 +71,7 @@ def table_extraction(pdf, name, page, type):
     Find any lattice tables in the page and convert its rows to syntactically sane text sentences for NER run
     :param pdf: Location of PDF file
     :param name: Name of PDF file
-    :param page: Page number to find tables in
+    :param page: Page numbers to find tables in
     :param type: If OCR or regular PDF page
     :return: Text string that contains row vise sentences
     """
@@ -80,23 +79,23 @@ def table_extraction(pdf, name, page, type):
         try:
             tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
                                             split_text=True,
-                                            process_background=False, copy_text=['h', 'v'], line_scale=60,
-                                            layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
-                                                           'boxes_flow': 1})  # Text based page
-        except ZeroDivisionError:   # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
-                                    # float division by zero
+                                            process_background=False, copy_text=['h', 'v'], line_scale=50, )
+            # layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
+            #                'boxes_flow': 1})  # Text based page
+        except ZeroDivisionError:  # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
+            # float division by zero
             print('Zero Division Error')
             return None
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
 
-    tables.export(f'C:/Data/Output/tables/{name}table.html', f='html',
-                  compress=False)  # json, excel, html, markdown, sqlite
+    tables.export(f'C:/Data/Output/{name} tables.csv', f='txt',
+                  compress=True)  # json, excel, html, markdown, sqlite, txt
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
-    tablesfin, line, dic, header, tables_list = [], '', {}, 0, []
+    tablesfin, item, dic, header, table_line = [], '', {}, 0, []
     for table in text:
         for row_index, row in enumerate(table):
-            para = []
+            items = []
             for col_index, col in enumerate(row):
                 dic.setdefault(f'Col{col_index}', [])
                 if row_index <= header:
@@ -106,11 +105,11 @@ def table_extraction(pdf, name, page, type):
                     header = row_index
                 else:
                     head = ' '.join(dic.get(f'Col{col_index}', ''))
-                    line = f'{head} - {table[row_index][col_index]},'
-                para.append(line)
-            lines = ' '.join(para)
-            tables_list.append(lines)
-        tablesfin.append(tables_list)
+                    item = f'{head} - {table[row_index][col_index]},'
+                items.append(item)
+            row_line = ' '.join(items)
+            table_line.append(row_line)
+        tablesfin.append(table_line)
 
     # for table in tablesfin:
     # print(f'\n ------ TABLES ------\n {table}\n')
@@ -133,7 +132,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         loc = f'{location}/{filename}_{page}.png'
         image = cv2.imread(loc)
         reader = easyocr.Reader(['en'],
-                                recog_network='custom_example')  # , recog_network='custom_example' this needs to run only once to load the model into memory
+                                recog_network='custom_example')  # recog_network='custom_example' this needs to run only once to load the model into memory
         result = reader.readtext(loc, height_ths=0.2,
                                  ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2,
                                  x_ths=50)
@@ -153,7 +152,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
             # with the OCR'd text itself
             cv2.rectangle(image, tl, br, (0, 0, 255), 4)
             cv2.putText(image, text, (tl[0], tl[1] - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 90, 200), 8)
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 90, 200), 5)
 
         file = open(f"C:/Data/Output/OCR/{filename}_OCR.txt", 'a')
         for (bbox, text) in result:  # , prob
@@ -164,7 +163,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         # show the output image
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
-        cv2.waitKey(20)
+        cv2.waitKey(2)
     # print(f'FINAL PAGE TEXT : {total_text}')
     return str(total_text)
 
@@ -195,9 +194,10 @@ def ner(pdf, titles, im_loc):
     table_sent = []
     data = ''
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\full-fixed-roberta-base-April\best-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
     tables = []
+    open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
     rsrcmgr = PDFResourceManager()
     retstr = BytesIO()
     codec = 'utf-8'
@@ -215,7 +215,7 @@ def ner(pdf, titles, im_loc):
     ##############
 
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        if pagenum is not None:
+        if pagenum is not None:  # is not None:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 10:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
@@ -225,22 +225,48 @@ def ner(pdf, titles, im_loc):
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')  # Run OCR based table extraction
-                except IndexError:  # Outer line missing in table
+                except:  # Outer line missing in table
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
+                    page_tables = None
                     continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
-                except IndexError:
+                except:
+                    page_tables = None
                     print(f'Page  {pagenum} Table not readable. Skipping it.')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
             if page_tables:
+                tok_table_lines, tok_line, extraction = [], None, []
+                # NEW LOGIC
+                for table in page_tables:
+                    for line in table:
+                        tok_table_lines.append(Sentence(line, use_tokenizer=True))
+                for tok_line in tok_table_lines:
+                    tagger.predict(tok_line)
+                with open(f"C:/Data/Output/{titles} tables.csv", 'a', newline='', encoding="utf-8") as f:
+                    for tok_line in tok_table_lines:
+                        for entity in tok_line.get_spans('ner', min_score=threshold):
+                            if str(entity.tag) != 'tenderid' and entity.tag != 'marking':
+                                print(f'-- Adding table extraction to CSV file --')
+                                extraction.append(f'"{entity.text} , {entity.tag}"')
+                    if extraction:
+                        f.write("-------------------------- , ---------------------- \n")
+                        f.write("Attribute , Type")
+                        f.write("\n")
+                        res = list(OrderedDict.fromkeys(extraction))
+                        for tags in res:
+                            f.write(tags)
+                            f.write("\n")
+                        f.write("\n -------------------------- , ---------------------- \n")
+                '''
+                #OLD LOGIC
                 for table in page_tables:
                     tables.append(table)  # Save tables in universal 'tables' list
-
+                '''
                 # print(f'::PAGE IS NORMAL AND EXTRACTABLE::')
             retstr.truncate(0)
             retstr.seek(0)
@@ -249,13 +275,14 @@ def ner(pdf, titles, im_loc):
     pbar.close()
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
-
-    for pages in tqdm(tables, desc=f'Predicting Tables . . .'):
+    '''
+    for pages in tqdm(tables, desc=f'Converting Tables . . .'):
         for table_no, multi_table in enumerate(pages):
             table_sent.append(Sentence(multi_table, use_tokenizer=True))
 
     for table_lines in table_sent:
         tagger.predict(table_lines)
+    '''
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
         tagger.predict(sentence)
 
@@ -277,10 +304,20 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
+        cable_list = ['pvc insulated', 'xlpe insulated',
+                      'cable',
+                      'cables']  # 'cable', 'lt', 'lt cable', 'cables']
+        forbidden = ['accessory', 'accessories', 'standard', 'standards', 'cable and accessory', 'cable and accessories']
+        cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) != 'tenderid':
+
+                #########################################################
+                #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
+                #########################################################
+
+                if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                     '''
                     # Add entity name normalization logic using dictionaries
                     if entity.tag in key_mappings:
@@ -288,22 +325,45 @@ def ner(pdf, titles, im_loc):
                     dic[sentence.to_plain_string()].append(
                         f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
                     '''
+                    if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
+                        print(f'Cable Type enitity detected  - {entity.text}')
+                        for x in forbidden:  # Filtering results of Cable Type
+                            if entity.text.lower().find(x) == -1:
+                                for y in cable_list:
+                                    if entity.text.lower().find(y) != -1:
+                                        print(f'======= Cable Type set {x} =======')
+                                        cable_flag = 1
+                                        cable_name = entity.text
+                                        break
+                            else:  # Else set flag = 0
+                                cable_flag = 0
 
-                    dic[sentence.to_plain_string()].append(
-                        f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
-                    # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                    # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                    print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
+                    if cable_flag == 1 and entity.tag != 'cableItype':
+                        if entity.tag in ['marking', 'packing'] and len(
+                                entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
+                            dic[sentence.to_plain_string()].append(
+                                f'Tag: >> {entity.tag} |> {cable_name}')  # Adding specific formatted line to final text file
+                            print(
+                                f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                            continue
+                        dic[sentence.to_plain_string()].append(  # Adding specific formatted line to final text file
+                            f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
+                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                        print(
+                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+
         print(f'|______________________________________________________________________________|')
+
         for k, v in dic.items():
             if len(v) > 0:
                 res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 for tags in res:
-                    f.writelines(f'Tags: {tags}')
+                    f.writelines(f'{tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
         tablefile = f'C:/Data/Output/{titles}_table.txt'
-        dic2 = {}  # Declare dictionary for removing duplicate sentences
+        dic2 = {}  # Declare dictionary for removing duplicate sentences in tables
         with open(tablefile, 'w', newline='', encoding="utf-8") as f:
             f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
             f.writelines(f'/////////////////////  T A B L E S     R E S U L T  /////////////////////////// \n')
@@ -313,7 +373,7 @@ def ner(pdf, titles, im_loc):
             for sent in table_sent:
                 dic2.setdefault(sent.to_plain_string(), [])
                 for entity in sent.get_spans('ner', min_score=threshold):
-                    if str(entity.tag) != 'tenderid':
+                    if str(entity.tag) != 'tenderid' and entity.tag != 'marking' and entity.tag != 'cableItype':
                         dic2[sent.to_plain_string()].append(
                             f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
                         # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
@@ -343,8 +403,8 @@ def ner(pdf, titles, im_loc):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', dest='threshold', help='Default is to show all tags  , Limit: [0,1]', type=float,
-                        default=-1)
+    parser.add_argument('-c', dest='threshold', help='Default = 0.8  , Limit: [0,1]', type=float,
+                        default=0.8)
     parser.add_argument('-f', dest='pdfname', help='Name of PDF to be processed', type=str)
     args = parser.parse_args()
 
