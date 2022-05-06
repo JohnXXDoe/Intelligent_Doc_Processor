@@ -227,17 +227,20 @@ def ner(pdf, titles, im_loc):
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')  # Run OCR based table extraction
-                except:  # Outer line missing in table
-                    print(f'Page  {pagenum} Table not readable. Skipping it.')
+                except Exception as e:
                     page_tables = None
+                    print(f'Page  {pagenum} \n!!> {e} .')
                     continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
-                except:
+                except IndexError:
+                    page_tables = table_extraction(pdf, titles, pagenum,
+                                                   'lattice_ocr')
+                except Exception as e:
                     page_tables = None
-                    print(f'Page  {pagenum} Table not readable. Skipping it.')
+                    print(f'\nPage  {pagenum} !!> {e} .')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
@@ -258,7 +261,7 @@ def ner(pdf, titles, im_loc):
                     for tok_line in tok_table_lines:
                         for entity in tok_line.get_spans('ner', min_score=threshold):
                             if str(entity.tag) != 'tenderid' and entity.tag != 'marking':
-                                #print(f'-- Adding table extraction to CSV file --')
+                                # print(f'-- Adding table extraction to CSV file --')
                                 extraction.append(f'"{entity.text} , {entity.tag}"')
                     if extraction:
                         f.write("-------------------------- , ---------------------- \n")
@@ -289,7 +292,8 @@ def ner(pdf, titles, im_loc):
     # LOG OUTPUT
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = {}  # Declare dictionary for removing duplicate sentences
+    dic = {}  # Dictionary for removing duplicate sentences
+    misc = {}  # Dictionary for packng and marking tags
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -306,7 +310,9 @@ def ner(pdf, titles, im_loc):
         cable_list = ['pvc insulated', 'xlpe insulated',
                       'cable',
                       'cables']  # 'cable', 'lt', 'lt cable', 'cables']
-        forbidden = ['accessory', 'accessories', 'standard', 'standards', 'cable and accessory', 'cable and accessories']
+        forbidden = ['standard', 'standards', 'accessory', 'accessories', 'cable and accessory',
+                     'cable and accessories',
+                     'applicable standard', 'applicable standards']
         cable_flag = 0
         for sentence in sentences:
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
@@ -315,33 +321,45 @@ def ner(pdf, titles, im_loc):
                 #########################################################
                 #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
                 #########################################################
+                '''
+                # Add entity name normalization logic using dictionaries
+                if entity.tag in key_mappings:
+                    OG_ent = key_mappings[entity.tag]
+                dic[sentence.to_plain_string()].append(
+                    f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
+                '''
 
-                if str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
-                    '''
-                    # Add entity name normalization logic using dictionaries
-                    if entity.tag in key_mappings:
-                        OG_ent = key_mappings[entity.tag]
-                    dic[sentence.to_plain_string()].append(
-                        f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
-                    '''
-                    if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
-                        print(f'Cable Type enitity detected  - {entity.text}')
-                        for x in forbidden:  # Filtering results of Cable Type
-                            if entity.text.lower().find(x) == -1:
-                                for y in cable_list:
-                                    if entity.text.lower().find(y) != -1:
-                                        print(f'======= Cable Type set {x} =======')
-                                        cable_flag = 1
-                                        cable_name = entity.text
-                                        break
-                            else:  # Else set flag = 0
-                                cable_flag = 0
 
-                    if cable_flag == 1 and entity.tag != 'cableItype':
+                if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
+                    #print(f'Cable Type enitity detected  - {entity.text}')
+                    for x in forbidden:  # Filtering results of Cable Type
+                        #print(f'//  {entity.text.lower().find(x)}')
+                        if entity.text.lower().find(x) != -1:
+                            #print(f'XXXXX  Forbidden Cable type {entity.text}  XXXXX')
+                            cable_flag = 0
+                            break
+                        else:
+                            for y in cable_list:
+                                if entity.text.lower().find(y) != -1:
+                                    print(f'======= Cable Type set {entity.text} {entity.text.lower().find(y)}  -- {y}  =======')
+                                    cable_flag = 1
+                                    #print(f'======= Flag {cable_flag} =======')
+                                    cable_name = entity.text
+                                    break
+                                else:  # Else set flag = 0
+                                    continue
+                            #print(f'Out of Cable list Flag = {cable_flag}')
+                            break
+
+            if cable_flag == 1:
+                print(f'Cable type {cable_name} Accepted -- ')
+                for entity in sentence.get_spans('ner', min_score=threshold):
+                    if entity.tag != 'cableItype' and entity.tag != 'tenderid' and str(entity.tag) != 'standard':
                         if entity.tag in ['marking', 'packing'] and len(
                                 entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
-                            dic[sentence.to_plain_string()].append(
-                                f'Tag: >> {entity.tag} |> {cable_name}')  # Adding specific formatted line to final text file
+                            misc.setdefault(entity.tag, [])
+                            misc[entity.tag].append(
+                                f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
                             continue
@@ -351,7 +369,8 @@ def ner(pdf, titles, im_loc):
                         # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                         print(
                             f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
-
+            else:
+                continue
         print(f'|______________________________________________________________________________|')
 
         for k, v in dic.items():
@@ -361,31 +380,14 @@ def ner(pdf, titles, im_loc):
                     f.writelines(f'{tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
-        tablefile = f'C:/Data/Output/{titles}_table.txt'
-        dic2 = {}  # Declare dictionary for removing duplicate sentences in tables
-        with open(tablefile, 'w', newline='', encoding="utf-8") as f:
-            f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-            f.writelines(f'/////////////////////     F I L E S     S A V E D    /////////////////////////// \n')
-            f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-            f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
+        for k, v in misc.items():
+            if len(v) > 0:
+                #res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
+                f.writelines(f'{k}\n')
+                for count, tags in enumerate(v):
+                    f.writelines(f'\nSentence {count} : {tags}')
 
-            for sent in table_sent:
-                dic2.setdefault(sent.to_plain_string(), [])
-                for entity in sent.get_spans('ner', min_score=threshold):
-                    if str(entity.tag) != 'tenderid' and entity.tag != 'marking' and entity.tag != 'cableItype':
-                        dic2[sent.to_plain_string()].append(
-                            f'> {entity.text}, {entity.tag} - [{(round(entity.score, 4) * 100)}%]\n')
-                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                        print(f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')
-            print(f'|______________________________________________________________________________|')
-            for k, v in dic2.items():
-                if len(v) > 0:
-                    res = list(OrderedDict.fromkeys(v))
-                    for tags in res:
-                        f.writelines(f'Tags: {tags}')
-                    f.writelines(f'\nSentence : {k} \n\n')
-                    f.writelines(f'X----------------------------------X-------------------------------X \n\n')
+                f.writelines(f'\nX----------------------------------X-------------------------------X \n\n')
 
     colors = {
 
