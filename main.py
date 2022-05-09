@@ -267,7 +267,7 @@ def ner(pdf, titles, im_loc):
                                 extraction.append(f'"{entity.text} , {entity.tag}"')
                     if extraction:
                         f.write("-------------------------- , ---------------------- \n")
-                        f.write("Attribute , Type")
+                        f.write('"Attribute , Type"')
                         f.write("\n")
                         res = list(OrderedDict.fromkeys(extraction))
                         for tags in res:
