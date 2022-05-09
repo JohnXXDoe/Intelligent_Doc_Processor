@@ -160,12 +160,14 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
             file.write(str(text))
             file.write('\n')
         file.close()
-        '''
+
         # Show the output image
+        '''
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
         cv2.imshow("PDF Output", image)
         cv2.waitKey(2)
         '''
+
     return str(total_text)
 
 
@@ -219,7 +221,7 @@ def ner(pdf, titles, im_loc):
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
         if pagenum is not None:  # is not None:
             interpreter.process_page(page)
-            if len(retstr.getvalue()) < 10:
+            if len(retstr.getvalue()) < 30:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
@@ -313,65 +315,56 @@ def ner(pdf, titles, im_loc):
         forbidden = ['standard', 'standards', 'accessory', 'accessories', 'cable and accessory',
                      'cable and accessories',
                      'applicable standard', 'applicable standards']
-        cable_flag = 0
+
         for sentence in sentences:
+            cable_flag = 1
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
 
                 #########################################################
                 #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
                 #########################################################
-                '''
-                # Add entity name normalization logic using dictionaries
-                if entity.tag in key_mappings:
-                    OG_ent = key_mappings[entity.tag]
-                dic[sentence.to_plain_string()].append(
-                    f'> {entity.text}, {OG_ent} - [{(round(entity.score, 4) * 100)}%]\n')
-                '''
 
-
-                if str(entity.tag) == 'cableItype':  # Cable type subset detection logic
-                    #print(f'Cable Type enitity detected  - {entity.text}')
+                if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
+                    print(f'Cable Type enitity detected  - {entity.text}')
                     for x in forbidden:  # Filtering results of Cable Type
-                        #print(f'//  {entity.text.lower().find(x)}')
                         if entity.text.lower().find(x) != -1:
-                            #print(f'XXXXX  Forbidden Cable type {entity.text}  XXXXX')
                             cable_flag = 0
                             break
-                        else:
-                            for y in cable_list:
-                                if entity.text.lower().find(y) != -1:
-                                    print(f'======= Cable Type set {entity.text} {entity.text.lower().find(y)}  -- {y}  =======')
-                                    cable_flag = 1
-                                    #print(f'======= Flag {cable_flag} =======')
-                                    cable_name = entity.text
-                                    break
-                                else:  # Else set flag = 0
-                                    continue
-                            #print(f'Out of Cable list Flag = {cable_flag}')
-                            break
+                    break
 
-            if cable_flag == 1:
-                print(f'Cable type {cable_name} Accepted -- ')
+            if cable_flag == 1:  # If not in Forbidden list check if in Cable type
                 for entity in sentence.get_spans('ner', min_score=threshold):
-                    if entity.tag != 'cableItype' and entity.tag != 'tenderid' and str(entity.tag) != 'standard':
+                    for y in cable_list:
+                        if entity.text.lower().find(y) != -1:
+                            print(f'======= Cable Type set {x} =======')
+                            cable_flag = 1
+                            cable_name = entity.text
+                            break
+                        else:  # Not in Cable type, set flag to 0
+                            cable_flag = 0
+                    break
+
+            if cable_flag == 1:  # If cable is present in sentence
+                for entity in sentence.get_spans('ner', min_score=threshold):
+                    if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                         if entity.tag in ['marking', 'packing'] and len(
                                 entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
-                            misc.setdefault(entity.tag, [])
-                            misc[entity.tag].append(
+                            misc.setdefault(entity.tag.upper(), [])
+                            misc[entity.tag.upper()].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
                             continue
-                        dic[sentence.to_plain_string()].append(  # Adding specific formatted line to final text file
-                            f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
-                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                        print(
-                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
-            else:
-                continue
-        print(f'|______________________________________________________________________________|')
+                        elif len(sentence.to_plain_string()) > len(
+                                entity.text) + 3 and entity.tag != 'marking' and entity.tag != 'packing':
+                            dic[sentence.to_plain_string()].append(  # Adding specific formatted line to final text file
+                                f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
+                            # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                            # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                            print(
+                                f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+        print(f'|___________________________________END OF FILE___________________________________________|')
 
         for k, v in dic.items():
             if len(v) > 0:
@@ -382,10 +375,10 @@ def ner(pdf, titles, im_loc):
                 f.writelines(f'X----------------------------------X-------------------------------X \n\n')
         for k, v in misc.items():
             if len(v) > 0:
-                #res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
+                # res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 f.writelines(f'{k}\n')
                 for count, tags in enumerate(v):
-                    f.writelines(f'\nSentence {count} : {tags}')
+                    f.writelines(f'\nSentence {count + 1} : {tags}')
 
                 f.writelines(f'\nX----------------------------------X-------------------------------X \n\n')
 
