@@ -309,9 +309,10 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
-        cable_list = ['pvc insulated', 'xlpe insulated',
-                      'cable',
-                      'cables']  # 'cable', 'lt', 'lt cable', 'cables']
+        cable_list = [
+            'cable',
+            'cables',
+            'kv']  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = ['standard', 'standards', 'accessory', 'accessories', 'cable and accessory',
                      'cable and accessories',
                      'applicable standard', 'applicable standards']
@@ -335,23 +336,22 @@ def ner(pdf, titles, im_loc):
 
             if cable_flag == 1:  # If not in Forbidden list check if in Cable type
                 for entity in sentence.get_spans('ner', min_score=threshold):
-                    for y in cable_list:
-                        if entity.text.lower().find(y) != -1:
-                            print(f'======= Cable Type set {x} =======')
-                            cable_flag = 1
-                            cable_name = entity.text
-                            break
-                        else:  # Not in Cable type, set flag to 0
-                            cable_flag = 0
-                    break
+                    if str(entity.tag) == 'cableItype':
+                        for y in cable_list:
+                            if entity.text.lower().find(y) != -1:
+                                print(f'======= Cable Type set {y} =======')
+                                cable_flag = 1
+                                cable_name = entity.text
+                                break
+                        break
 
             if cable_flag == 1:  # If cable is present in sentence
                 for entity in sentence.get_spans('ner', min_score=threshold):
                     if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                         if entity.tag in ['marking', 'packing'] and len(
                                 entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
-                            misc.setdefault(entity.tag.upper(), [])
-                            misc[entity.tag.upper()].append(
+                            misc.setdefault(entity.tag, [])
+                            misc[entity.tag].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
