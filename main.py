@@ -5,7 +5,7 @@ import argparse
 import huggingface_hub
 
 TRANSFORMERS_OFFLINE = 1
-
+from pikepdf import Pdf
 from flair.data import Sentence
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
@@ -193,13 +193,13 @@ def ner(pdf, titles, im_loc):
     :param im_loc: Location for saving PNG image in case of scanned page
     :return: None
     """
-    i = 1
-    table_sent = []
-    data = ''
+
+    with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:    # To decrypt Permission pdfs
+        pdf_f.save()
+    data = ''   # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
     # print(tagger)
-    tables = []
     open(f"C:/Data/Output/{titles}_OCR.txt", "w").close()  # Clear/Wipe OCR txt file
     open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
     rsrcmgr = PDFResourceManager()
