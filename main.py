@@ -77,9 +77,9 @@ def table_extraction(pdf, name, page, type):
     """
     if type == 'lattice':
         try:
-            tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page), backend="poppler",
-                                            split_text=True,
-                                            process_background=False, copy_text=['h', 'v'], line_scale=50, )
+            tables, text = camelot.read_pdf(pdf, flavor='lattice', strip_text='\n', pages=str(page),
+                                            backend="poppler", split_text=True, process_background=False,
+                                            copy_text=['h', 'v'], line_scale=60)
             # layout_kwargs={'char_margin': 1, 'line_margin': 0.2,
             #                'boxes_flow': 1})  # Text based page
         except ZeroDivisionError:  # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
@@ -194,11 +194,11 @@ def ner(pdf, titles, im_loc):
     :return: None
     """
 
-    with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:    # To decrypt Permission pdfs
+    with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:  # To decrypt Permission pdfs
         pdf_f.save()
-    data = ''   # Data string variable to save all text data of PDF
+    data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\roberta-manul-strd/final-model.pt')  # all-fixed-roberta-base-resume
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048layers_std\final-model.pt')  # roberta-manul-strd/final-model.pt
     # print(tagger)
     open(f"C:/Data/Output/{titles}_OCR.txt", "w").close()  # Clear/Wipe OCR txt file
     open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
@@ -229,19 +229,22 @@ def ner(pdf, titles, im_loc):
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')  # Run OCR based table extraction
+
                 except Exception as e:
                     page_tables = None
                     print(f'Page  {pagenum} \n!!> {e} .')
                     continue
             else:
                 try:
+
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
                 except IndexError:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')
                 except Exception as e:
-                    page_tables = None
+                    page_tables = table_extraction(pdf, titles, pagenum,
+                                                   'lattice_ocr')
                     print(f'\nPage  {pagenum} !!> {e} .')
 
                 data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
@@ -303,49 +306,53 @@ def ner(pdf, titles, im_loc):
         print(f'-------------------------------------------------------------------------------')
         print(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-        f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         f.writelines(f'//////////////////  E X T R A C T I O N    R E S U L T  //////////////////////// \n')
-        f.writelines(f'//////////////////     Text, Entity - [Confidence]     ///////////////////////// \n')
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-        f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
-        f.writelines(f'------------------------------------------------------------------------------- \n\n\n')
+        cable_name = None
         cable_list = [
-            'cable',
-            'cables',
-            'kv']  # 'cable', 'lt', 'lt cable', 'cables']
-        forbidden = ['standard', 'standards', 'accessory', 'accessories', 'cable and accessory',
+            'hv', 'lv', 'power', 'xlpe', 'electric', 'lt', 'ht'
+            'control', 'areal', 'abc', 'bunched', 'pvc', 'armour'
+            'kv'
+            ]  # 'cable', 'lt', 'lt cable', 'cables']
+        forbidden = ['applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
                      'cable and accessories',
-                     'applicable standard', 'applicable standards']
-
+                     'applicable standard', 'applicable standards', 'system', 'switch', 'substation'
+                     'circuit', 'isolator',
+                     'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke',
+                     'hdpe', 'mccb', 'breaker', 'pole']
+        cable_flag = 1
         for sentence in sentences:
-            cable_flag = 1
+
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
+            #########################################################
+            #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
+            #########################################################
+
             for entity in sentence.get_spans('ner', min_score=threshold):
+                if str(entity.tag) == 'cableItype':
+                    for y in cable_list:
+                        if entity.text.lower().find(y) != -1 and len(entity) > 1:
+                            cable_flag = 1
+                            cable_name = entity.text
+                            break
+                    continue
+                else:
+                    continue
 
-                #########################################################
-                #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
-                #########################################################
-
+            for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
-                    print(f'Cable Type enitity detected  - {entity.text}')
+                    print(f'- - - - Cable {entity.text.upper()}- - - - ')
                     for x in forbidden:  # Filtering results of Cable Type
                         if entity.text.lower().find(x) != -1:
+                            print(f'X X X X X Cable Type Rejected {entity.text.upper()} X X X X X')
                             cable_flag = 0
                             break
                     break
+                else:
+                    continue
 
-            if cable_flag == 1:  # If not in Forbidden list check if in Cable type
-                for entity in sentence.get_spans('ner', min_score=threshold):
-                    if str(entity.tag) == 'cableItype':
-                        for y in cable_list:
-                            if entity.text.lower().find(y) != -1:
-                                print(f'======= Cable Type set {y} =======')
-                                cable_flag = 1
-                                cable_name = entity.text
-                                break
-                        break
-
-            if cable_flag == 1:  # If cable is present in sentence
+            if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
+                print(f'= = = = = Cable Type set {entity.text.upper()} = = = = =')
                 for entity in sentence.get_spans('ner', min_score=threshold):
                     if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                         if entity.tag in ['marking', 'packing'] and len(
@@ -372,7 +379,7 @@ def ner(pdf, titles, im_loc):
                 for tags in res:
                     f.writelines(f'{tags}')
                 f.writelines(f'\nSentence : {k} \n\n')
-                f.writelines(f'X----------------------------------X-------------------------------X \n\n')
+                f.writelines(f'X----------------------------------X-------------------------------X \n')
         for k, v in misc.items():
             if len(v) > 0:
                 # res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
@@ -380,7 +387,7 @@ def ner(pdf, titles, im_loc):
                 for count, tags in enumerate(v):
                     f.writelines(f'\nSentence {count + 1} : {tags}')
 
-                f.writelines(f'\nX----------------------------------X-------------------------------X \n\n')
+                f.writelines(f'\nX----------------------------------X-------------------------------X \n')
 
     colors = {
 
