@@ -198,7 +198,7 @@ def ner(pdf, titles, im_loc):
         pdf_f.save()
     data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048layers_std\final-model.pt')  # roberta-manul-strd/final-model.pt
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048layers_std\final-model.pt')  # 2048layers_std/final-model.pt
     # print(tagger)
     open(f"C:/Data/Output/{titles}_OCR.txt", "w").close()  # Clear/Wipe OCR txt file
     open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
@@ -310,7 +310,7 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         cable_name = None
         cable_list = [
-            'hv', 'lv', 'power', 'xlpe', 'electric', 'lt', 'ht'
+            'hv', 'lv', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable'
             'control', 'areal', 'abc', 'bunched', 'pvc', 'armour'
             'kv'
             ]  # 'cable', 'lt', 'lt cable', 'cables']
@@ -319,7 +319,7 @@ def ner(pdf, titles, im_loc):
                      'applicable standard', 'applicable standards', 'system', 'switch', 'substation'
                      'circuit', 'isolator',
                      'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke',
-                     'hdpe', 'mccb', 'breaker', 'pole']
+                     'hdpe', 'mccb', 'breaker', 'pole', 'duct']
         cable_flag = 1
         for sentence in sentences:
 
