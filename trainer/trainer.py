@@ -6,8 +6,9 @@ from utils import AttrDict
 import pandas as pd
 from PIL import Image
 import torch
+
 torch.cuda.empty_cache()
-#from spacy import displacy
+# from spacy import displacy
 import webbrowser
 import tempfile
 
@@ -53,6 +54,7 @@ def get_config(file_path):
         opt.character = opt.number + opt.symbol + opt.lang_char
     os.makedirs(f'./saved_models/{opt.experiment_name}', exist_ok=True)
     return opt
+
 
 # Flair Training data
 
@@ -189,41 +191,47 @@ def flair_ner():
     #     FlairEmbeddings('news-backward'),
     # ]
 
-    #embeddings = StackedEmbeddings(embeddings=embedding_types)
+    # embeddings = StackedEmbeddings(embeddings=embedding_types)
 
     # 5. initialize bare-bones sequence tagger ()
-    tagger = SequenceTagger(hidden_size=512,
+    tagger = SequenceTagger(hidden_size=2048,
                             embeddings=embeddings,
                             tag_dictionary=label_dict,
                             use_crf=True,
                             tag_type=label_type,
+                            word_dropout=0.1,
+                            rnn_layers=2,
                             )
 
     # 6. initialize trainer
     trainer = ModelTrainer(tagger, corpus)
 
-
     # 7. run fine-tuning
-    # trainer.fine_tune('resources/taggers/all-fixed-roberta-base',
+
+    # trainer.fine_tune('resources/taggers/2048layers_std',
     #                   learning_rate=5.0e-6,
-    #                   mini_batch_size=2,
-    #                   max_epochs=1000,
-    #                   use_final_model_for_eval=False,
-    #                   embeddings_storage_mode=None)
+    #                   mini_batch_size='2',
+    #                   max_epochs=200,
+    #                   use_final_model_for_eval=True,
+    #                   embeddings_storage_mode='none')
+
     # training
-    # trainer.train('resources/taggers/reg_train',
-    #               learning_rate=0.1,
-    #               mini_batch_size=32,
+    # trainer.train('resources/taggers/2048layers',
+    #               learning_rate=5.0e-6,
+    #               mini_batch_size=8,
     #               embeddings_storage_mode='none',
-    #               max_epochs=200)
-    path = 'resources/taggers/all-fixed-roberta-base'
-    trained_model = SequenceTagger.load(path +'/best-model.pt')
+    #               max_epochs=300)
+    path = 'resources/taggers/2048layers_std'
+    trained_model = SequenceTagger.load(path + '/final-model.pt')
     trainer.resume(trained_model,
-                   base_path=path + '-resume',
-                   max_epochs=1000,
+                   base_path=path + '-new',
+                   max_epochs=200,
+                   mini_batch_size=2,
+                   monitor_train=True,
                    )
+
+
 if __name__ == '__main__':
     #   opt = get_config("config_files/en_filtered_config.yaml")
     # train(opt, amp=False)
     flair_ner()
-
