@@ -352,7 +352,7 @@ def ner(pdf, titles, im_loc):
                     continue
 
             if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
-                print(f'= = = = = Cable Type set {entity.text.upper()} = = = = =')
+                print(f'= = = = = Cable Type set {cable_name.upper()} = = = = =')
                 for entity in sentence.get_spans('ner', min_score=threshold):
                     if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
                         if entity.tag in ['marking', 'packing'] and len(
