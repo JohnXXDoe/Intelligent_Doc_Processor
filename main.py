@@ -133,10 +133,14 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         image = cv2.imread(loc)
         reader = easyocr.Reader(['en'],
                                 recog_network='custom_example')  # recog_network='custom_example' this needs to run only once to load the model into memory
-        result = reader.readtext(loc, height_ths=0.2,
-                                 ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch', y_ths=0.2,
-                                 x_ths=50)
-
+        try:
+            result = reader.readtext(loc, height_ths=0.2,
+                                     ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch',
+                                     y_ths=0.2,
+                                     x_ths=50)
+        except Exception as e:
+            result = ''  # Exception occured.
+            print(e)
         # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
         for (bbox, text) in result:  # , prob
@@ -311,15 +315,15 @@ def ner(pdf, titles, im_loc):
         cable_name = None
         cable_list = [
             'hv', 'lv', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable'
-            'control', 'areal', 'abc', 'bunched', 'pvc', 'armour'
-            'kv'
-            ]  # 'cable', 'lt', 'lt cable', 'cables']
+                                                                 'control', 'areal', 'abc', 'bunched', 'pvc', 'armour'
+                                                                                                              'kv'
+        ]  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = ['applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
-                     'cable and accessories',
+                                                                                                               'cable and accessories',
                      'applicable standard', 'applicable standards', 'system', 'switch', 'substation'
-                     'circuit', 'isolator',
+                                                                                        'circuit', 'isolator',
                      'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke',
-                     'hdpe', 'mccb', 'breaker', 'pole', 'duct']
+                     'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence']
         cable_flag = 1
         for sentence in sentences:
 
