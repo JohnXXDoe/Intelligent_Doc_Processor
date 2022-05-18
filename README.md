@@ -30,21 +30,21 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor">
+    <img src="images/5860.jpg" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">Intelligent Document Processor</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    Read large scale PDF documents and extract important entities (Lots of customisations too!)
     <br />
-    <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR/tree/master/trainer">Training sub-directory</a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor/tree/master/trainer">Training sub-directory</a>
     ·
-    <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR/tree/master/Outputs">Sample Outputs</a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor/tree/master/Outputs">Sample Outputs</a>
   </p>
 </div>
 
@@ -88,7 +88,8 @@ Currently this program is trained to extract ~17 Tags which range in their avera
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
-
+### Customized rejection filter to classify and remove unnecessary extractions
+[![Rejection Screen Shot][rejection]]
 ### Built With
 
 * [Camelot](https://github.com/camelot-dev)
@@ -234,4 +235,5 @@ Use this space to list resources you find helpful and would like to give credit 
 [license-url]: https://github.com/JohnXXDoe/Doc_IMG-OCR/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/utkarsh-kharayat-23068b179
-[product-screenshot]: images/screenshot.pn
+[product-screenshot]: images/IDP.PNG
+[rejection]: images/Rejection.PNG
