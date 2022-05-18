@@ -156,7 +156,7 @@ After the addition of table detection this project will be able to keep data int
 ## Roadmap
 
 - [ ] Add Changelog
-- [ ] Add Screenshots
+- [-] Add Screenshots
 - [ ] Add Training explanation
 - [ ] Decide License
 
@@ -194,7 +194,7 @@ To be added.
 <!-- CONTACT -->
 ## Contact
 
-Utkarsh Kharayat - utkarshkhrt12@gmail.com
+Utkarsh Kharayat - utkarshk.co.16@nsit.ac.in
 
 Project Link: [https://github.com/your_username/repo_name](https://github.com/JohnXXDoe/Doc_IMG-OCR/)
 
@@ -205,11 +205,12 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/Jo
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+Open source libraries used to make this project possible:
 
 * [Camelot](https://github.com/camelot-dev)
 * [EasyOCR](https://github.com/JaidedAI/EasyOCR)
 * [Fair](https://github.com/flairNLP/flair)
+* [PDFminerSIX](https://github.com/pdfminer/pdfminer.six)
 * [Choose an Open Source License](https://choosealicense.com)
 * [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
 * [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
