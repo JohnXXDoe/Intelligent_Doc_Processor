@@ -37,9 +37,9 @@
   <h3 align="center">Intelligent Document Processor</h3>
 
   <p align="center">
-    Read large scale PDF documents and extract important entities (Lots of customisations too!)
+    Read large scale PDF documents and extract important entities (Lots of customisations too!) 600Pages -> 12 Page summary within 16 minutes
     <br />
-    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor"><strong>Explore Repo »</strong></a>
     <br />
     <br />
     <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor/tree/master/trainer">Training sub-directory</a>
@@ -74,11 +74,15 @@
 </details>
 
 
+## Project Outputs
+### HTML PDF marked render
+![Product Name Screen Shot][product-screenshot]
+### Text file summarised output
+![Product Name Screen Shot][summary-output]
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+## About The Project
 
 Project was created out of a need to process large tender documents and creating a requirements sheet after going thorugh the large PDF (80-900 pages). This task can be eased with the help of a custom NER.
 This project aims to reduce and ultimately eleminate the need to go through such tenders manually to find its tags.
@@ -156,9 +160,9 @@ After the addition of table detection this project will be able to keep data int
 ## Roadmap
 
 - [ ] Add Changelog
-- [-] Add Screenshots
+- [/] Add Screenshots
 - [ ] Add Training explanation
-- [ ] Decide License
+- [ ] Explain Dataset creator 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -238,3 +242,4 @@ Open source libraries used to make this project possible:
 [linkedin-url]: https://linkedin.com/in/utkarsh-kharayat-23068b179
 [product-screenshot]: images/IDP.PNG
 [rejection]: images/Rejection.PNG
+[summary-output]: images/summary_out.PNG
