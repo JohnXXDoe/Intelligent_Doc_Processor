@@ -30,21 +30,21 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor">
+    <img src="images/5860.jpg" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">Intelligent Document Processor</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    Read large scale PDF documents and extract important entities (Lots of customisations too!) 600Pages -> 12 Page summary within 16 minutes
     <br />
-    <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor"><strong>Explore Repo »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR/tree/master/trainer">Training sub-directory</a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor/tree/master/trainer">Training sub-directory</a>
     ·
-    <a href="https://github.com/JohnXXDoe/Doc_IMG-OCR/tree/master/Outputs">Sample Outputs</a>
+    <a href="https://github.com/JohnXXDoe/Intelligent_Doc_Processor/tree/master/Outputs">Sample Outputs</a>
   </p>
 </div>
 
@@ -74,11 +74,15 @@
 </details>
 
 
+## Project Outputs
+### HTML PDF marked render
+![Product Name Screen Shot][product-screenshot]
+### Text file summarised output
+![Product Name Screen Shot][summary-output]
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+## About The Project
 
 Project was created out of a need to process large tender documents and creating a requirements sheet after going thorugh the large PDF (80-900 pages). This task can be eased with the help of a custom NER.
 This project aims to reduce and ultimately eleminate the need to go through such tenders manually to find its tags.
@@ -88,7 +92,8 @@ Currently this program is trained to extract ~17 Tags which range in their avera
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
-
+### Customized rejection filter to classify and remove unnecessary extractions
+[![Rejection Screen Shot][rejection]]
 ### Built With
 
 * [Camelot](https://github.com/camelot-dev)
@@ -155,9 +160,9 @@ After the addition of table detection this project will be able to keep data int
 ## Roadmap
 
 - [ ] Add Changelog
-- [ ] Add Screenshots
+- [/] Add Screenshots
 - [ ] Add Training explanation
-- [ ] Decide License
+- [ ] Explain Dataset creator 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -193,7 +198,7 @@ To be added.
 <!-- CONTACT -->
 ## Contact
 
-Utkarsh Kharayat - utkarshkhrt12@gmail.com
+Utkarsh Kharayat - utkarshk.co.16@nsit.ac.in
 
 Project Link: [https://github.com/your_username/repo_name](https://github.com/JohnXXDoe/Doc_IMG-OCR/)
 
@@ -204,11 +209,12 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/Jo
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+Open source libraries used to make this project possible:
 
 * [Camelot](https://github.com/camelot-dev)
 * [EasyOCR](https://github.com/JaidedAI/EasyOCR)
 * [Fair](https://github.com/flairNLP/flair)
+* [PDFminerSIX](https://github.com/pdfminer/pdfminer.six)
 * [Choose an Open Source License](https://choosealicense.com)
 * [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
 * [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
@@ -234,4 +240,6 @@ Use this space to list resources you find helpful and would like to give credit 
 [license-url]: https://github.com/JohnXXDoe/Doc_IMG-OCR/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/utkarsh-kharayat-23068b179
-[product-screenshot]: images/screenshot.pn
+[product-screenshot]: images/IDP.PNG
+[rejection]: images/Rejection.PNG
+[summary-output]: images/summary_out.PNG
