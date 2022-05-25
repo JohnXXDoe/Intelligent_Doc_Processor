@@ -258,36 +258,40 @@ def ner(pdf, titles, im_loc):
             # NEW LOGIC                                                      #
             # Append table NER extractions to table csv file after each page #
             ##################################################################
-
-            if page_tables:
-                tok_table_lines, tok_line, extraction = [], None, []
-                for table in page_tables:
-                    for line in table:
-                        tok_table_lines.append(Sentence(line, use_tokenizer=True))
-                for tok_line in tok_table_lines:
-                    tagger.predict(tok_line)
-                with open(f"C:/Data/Output/{titles} tables.csv", 'a', newline='', encoding="utf-8") as f:
+            try:    # If page has a large diagram, catch Out of memory exception of CUDA
+                if page_tables:
+                    tok_table_lines, tok_line, extraction = [], None, []
+                    for table in page_tables:
+                        for line in table:
+                            tok_table_lines.append(Sentence(line, use_tokenizer=True))
                     for tok_line in tok_table_lines:
-                        for entity in tok_line.get_spans('ner', min_score=threshold):
-                            if str(entity.tag) != 'tenderid' and entity.tag != 'marking':
-                                # print(f'-- Adding table extraction to CSV file --')
-                                extraction.append(f'"{entity.text} , {entity.tag}"')
-                    if extraction:
-                        f.write("-------------------------- , ---------------------- \n")
-                        f.write('"Attribute , Type"')
-                        f.write("\n")
-                        res = list(OrderedDict.fromkeys(extraction))
-                        for tags in res:
-                            f.write(tags)
+                        tagger.predict(tok_line)
+                    with open(f"C:/Data/Output/{titles} tables.csv", 'a', newline='', encoding="utf-8") as f:
+                        for tok_line in tok_table_lines:
+                            for entity in tok_line.get_spans('ner', min_score=threshold):
+                                if str(entity.tag) != 'tenderid' and entity.tag != 'marking' and entity.tag != '<unk>':
+                                    # print(f'-- Adding table extraction to CSV file --')
+                                    extraction.append(f'"{entity.text} , {entity.tag}"')
+                        if extraction:
+                            f.write("-------------------------- , ---------------------- \n")
+                            f.write('"Attribute , Type"')
                             f.write("\n")
-                        f.write("\n -------------------------- , ---------------------- \n")
-                '''
-                #OLD LOGIC
-                for table in page_tables:
-                    tables.append(table)  # Save tables in universal 'tables' list
-                '''
-            retstr.truncate(0)
-            retstr.seek(0)
+                            res = list(OrderedDict.fromkeys(extraction))
+                            for tags in res:
+                                f.write(tags)
+                                f.write("\n")
+                            f.write("\n -------------------------- , ---------------------- \n")
+                    '''
+                    #OLD LOGIC
+                    for table in page_tables:
+                        tables.append(table)  # Save tables in universal 'tables' list
+                    '''
+                retstr.truncate(0)
+                retstr.seek(0)
+            except RuntimeError:
+                print(f'Too Large page CUDA OFM error')
+                retstr.truncate(0)
+                retstr.seek(0)
         pagenum += 1
         pbar.update(1)
     pbar.close()
@@ -295,7 +299,11 @@ def ner(pdf, titles, im_loc):
     sentences = splitter.split(data)
 
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
-        tagger.predict(sentence)
+        try:  # If page has a large diagram, catch Out of memory exception of CUDA
+            tagger.predict(sentence)
+        except RuntimeError:
+            print(f'Too Large page CUDA OFM error')
+            continue
 
     ###################
     # LOG OUTPUT
@@ -314,16 +322,15 @@ def ner(pdf, titles, im_loc):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         cable_name = None
         cable_list = [
-            'hv', 'lv', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable'
-                                                                 'control', 'areal', 'abc', 'bunched', 'pvc', 'armour'
-                                                                                                              'kv'
-        ]  # 'cable', 'lt', 'lt cable', 'cables']
-        forbidden = ['applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
-                                                                                                               'cable and accessories',
-                     'applicable standard', 'applicable standards', 'system', 'switch', 'substation'
-                                                                                        'circuit', 'isolator',
-                     'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke',
-                     'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence']
+            'hv cable', 'lv cable', 'hv cables', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable', 'ab', 'ug',
+            'control', 'areal', 'abc', 'bunched', 'pvc', 'armour', 'kv', 'lv cables'
+            ]  # 'cable', 'lt', 'lt cable', 'cables']
+        forbidden = [
+            'applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
+            'cable and accessories', 'applicable standard', 'applicable standards', 'system', 'switch',
+            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker',  'pole', 'duct', 'fence',
+            'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug'
+            ]
         cable_flag = 1
         for sentence in sentences:
 
@@ -358,7 +365,7 @@ def ner(pdf, titles, im_loc):
             if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
                 print(f'= = = = = Cable Type set {cable_name.upper()} = = = = =')
                 for entity in sentence.get_spans('ner', min_score=threshold):
-                    if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard':
+                    if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard' and entity.tag != '<unk>':
                         if entity.tag in ['marking', 'packing'] and len(
                                 entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
                             misc.setdefault(entity.tag, [])
