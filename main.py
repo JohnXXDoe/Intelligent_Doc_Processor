@@ -33,7 +33,10 @@ import webbrowser
 # ONLY FOR DEMO USE #
 #####################
 import warnings
+
 warnings.filterwarnings("ignore")
+
+
 #####################
 # ONLY FOR DEMO USE #
 #####################
@@ -197,9 +200,10 @@ def read_dic():
             key_mappings[key] = value
 
 
-def ner(pdf, titles, im_loc):
+def ner(pdf, titles, im_loc, page_limits=(0, 0)):
     """
     Takes PDF runs it page by page to extract its text using OCR or text extraction to run NER model and save its output as text summary and temp HTML render
+    :param page_limits: start and end page number for extraction
     :param pdf: PDF file location
     :param titles: Name of PDF file
     :param im_loc: Location for saving PNG image in case of scanned page
@@ -229,9 +233,12 @@ def ner(pdf, titles, im_loc):
     ##############
     # Prediction #
     ##############
-
+    start = page_limits[0]
+    end = page_limits[1]
+    if start == 0:  # if no page range defined set last page as last page of PDF
+        end = total_pages
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        if pagenum is not None:  # is not None:
+        if start <= pagenum+1 <= end:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 30:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
@@ -259,7 +266,8 @@ def ner(pdf, titles, im_loc):
                                                    'lattice_ocr')
                     print(f'\nPage  {pagenum} !!> {e} .')
 
-                data += retstr.getvalue().decode('ascii', 'ignore')  # add extracted text from bytesIO to data variable
+                data += retstr.getvalue().decode('ascii',
+                                                 'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
 
             ##################################################################
@@ -300,10 +308,11 @@ def ner(pdf, titles, im_loc):
                 print(f'Too Large page CUDA OFM error')
                 retstr.truncate(0)
                 retstr.seek(0)
-        pagenum += 1
+            '''
+
         pbar.update(1)
     pbar.close()
-    '''
+
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
 
@@ -333,13 +342,15 @@ def ner(pdf, titles, im_loc):
         cable_list = [
             'hv cable', 'lv cable', 'hv cables', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable', 'ab', 'ug',
             'control', 'areal', 'abc', 'bunched', 'pvc', 'armour', 'kv', 'lv cables'
-            ]  # 'cable', 'lt', 'lt cable', 'cables']
+        ]  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = [
             'applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
-            'cable and accessories', 'applicable standard', 'applicable standards', 'system', 'switch',
-            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence','meter'
-            'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
-            ]
+                                                                                                      'cable and accessories',
+            'applicable standard', 'applicable standards', 'system', 'switch',
+            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter'
+                                                                                                  'switchgear', 'bus',
+            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
+        ]
         cable_flag = 1
         for sentence in sentences:
 
@@ -374,7 +385,8 @@ def ner(pdf, titles, im_loc):
             if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
 
                 for entity in sentence.get_spans('ner', min_score=threshold):
-                    if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard' and entity.tag != '<unk>':
+                    if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(
+                            entity.tag) != 'standard' and entity.tag != '<unk>':
                         if entity.tag in ['marking', 'packing'] and len(
                                 entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
                             misc.setdefault(entity.tag, [])
@@ -427,6 +439,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='threshold', help='Default = 0.8  , Limit: [0,1]', type=float,
                         default=0.8)
+    parser.add_argument('-s', dest='s_page', help='Default = 0  , Limit: [0-99999]', type=int,
+                        default=0)
+    parser.add_argument('-e', dest='e_page', help='Default = 0  , Limit: [0-99999]', type=int,
+                        default=0)
     parser.add_argument('-f', dest='pdfname', help='Name of PDF to be processed', type=str)
     args = parser.parse_args()
 
@@ -443,11 +459,12 @@ if __name__ == '__main__':
     print(f'-------------------------------------------------------------------------------')
     print(f'|::::::::::::::::   Threshold Confidence : {args.threshold}   :::::::::::::::::|')
     print(f'|::::::::::::::::     PDF to be evaluated : {args.pdfname}    :::::::::::::::::|')
+    print(f'|::::::::::::::::     Page limits  : {args.s_page}  - {args.e_page}  :::::::::::::::::|')
     print(f'|______________________________________________________________________________|')
 
     threshold = args.threshold
     pdfname = args.pdfname
-
+    pages = (args.s_page, args.e_page)
     # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
     PDF_file = f'C:/Data/test/{pdfname}.pdf'
     img_loc = r'C:/Data/Output/OCR/images'
@@ -455,7 +472,7 @@ if __name__ == '__main__':
     # pdf2img(PDF_file, pdfname)
     # img_ocr(img_loc, pdfname)
     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
-    ner(PDF_file, pdfname, img_loc)
+    ner(PDF_file, pdfname, img_loc, pages)
 
 """
 CLI command :
