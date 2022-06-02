@@ -29,6 +29,14 @@ from flair.visual.ner_html import render_ner_html, HTML_PAGE, TAGGED_ENTITY, PAR
 import tempfile
 import webbrowser
 
+#####################
+# ONLY FOR DEMO USE #
+#####################
+import warnings
+warnings.filterwarnings("ignore")
+#####################
+# ONLY FOR DEMO USE #
+#####################
 
 def pdf2img(pdf, name, pagenums=None):
     """
@@ -258,6 +266,8 @@ def ner(pdf, titles, im_loc):
             # NEW LOGIC                                                      #
             # Append table NER extractions to table csv file after each page #
             ##################################################################
+            '''
+            TABLE APPEND NER
             try:    # If page has a large diagram, catch Out of memory exception of CUDA
                 if page_tables:
                     tok_table_lines, tok_line, extraction = [], None, []
@@ -281,11 +291,9 @@ def ner(pdf, titles, im_loc):
                                 f.write(tags)
                                 f.write("\n")
                             f.write("\n -------------------------- , ---------------------- \n")
-                    '''
-                    #OLD LOGIC
-                    for table in page_tables:
-                        tables.append(table)  # Save tables in universal 'tables' list
-                    '''
+                    
+                    
+                    
                 retstr.truncate(0)
                 retstr.seek(0)
             except RuntimeError:
@@ -295,6 +303,7 @@ def ner(pdf, titles, im_loc):
         pagenum += 1
         pbar.update(1)
     pbar.close()
+    '''
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
 
@@ -328,8 +337,8 @@ def ner(pdf, titles, im_loc):
         forbidden = [
             'applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
             'cable and accessories', 'applicable standard', 'applicable standards', 'system', 'switch',
-            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker',  'pole', 'duct', 'fence',
-            'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug'
+            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence','meter'
+            'switchgear', 'bus', 'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
             ]
         cable_flag = 1
         for sentence in sentences:
@@ -363,7 +372,7 @@ def ner(pdf, titles, im_loc):
                     continue
 
             if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
-                print(f'= = = = = Cable Type set {cable_name.upper()} = = = = =')
+
                 for entity in sentence.get_spans('ner', min_score=threshold):
                     if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(entity.tag) != 'standard' and entity.tag != '<unk>':
                         if entity.tag in ['marking', 'packing'] and len(
@@ -371,6 +380,7 @@ def ner(pdf, titles, im_loc):
                             misc.setdefault(entity.tag, [])
                             misc[entity.tag].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
+                            print(f'= = = = = Cable Type  {cable_name.upper()} = = = = =')
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
                             continue
@@ -424,7 +434,7 @@ if __name__ == '__main__':
     print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'////////////////////////////////////////////////////////////////////////////////')
-    print(f'///////////////////     D O C U M E N T - N E R - T E S T    ///////////////////')
+    print(f'//////////////////     INTELLIGENT - DOCUMENT - PROCESSOR    ///////////////////')
     print(f'///////////////////             HAVELLS NEW TECH             ///////////////////')
     print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'////////////////////////////////////////////////////////////////////////////////')
