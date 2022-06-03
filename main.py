@@ -238,7 +238,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
     if start == 0:  # if no page range defined set last page as last page of PDF
         end = total_pages
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        if start <= pagenum+1 <= end:
+        pagenum += 1    # To start page count from 1
+        if start <= pagenum <= end:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 30:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
@@ -309,10 +310,11 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                 retstr.truncate(0)
                 retstr.seek(0)
             '''
-
+        retstr.truncate(0)  # Clear byte stream for new page extraction
+        retstr.seek(0)
         pbar.update(1)
     pbar.close()
-
+    print('///////// File Read Complete //////////// ')
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
 
@@ -458,7 +460,7 @@ if __name__ == '__main__':
     print(f'////////////////////////////////////////////////////////////////////////////////')
     print(f'-------------------------------------------------------------------------------')
     print(f'|::::::::::::::::   Threshold Confidence : {args.threshold}   :::::::::::::::::|')
-    print(f'|::::::::::::::::     PDF to be evaluated : {args.pdfname}    :::::::::::::::::|')
+    print(f'|::::::::::::::::     PDF to be evaluated : {str(args.pdfname).upper()}    :::::::::::::::::|')
     print(f'|::::::::::::::::     Page limits  : {args.s_page}  - {args.e_page}  :::::::::::::::::|')
     print(f'|______________________________________________________________________________|')
 
