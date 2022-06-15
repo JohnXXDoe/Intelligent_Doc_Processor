@@ -238,7 +238,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
     if start == 0:  # if no page range defined set last page as last page of PDF
         end = total_pages
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
-        pagenum += 1    # To start page count from 1
+        pagenum += 1  # To start page count from 1
         if start <= pagenum <= end:
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 30:
@@ -271,45 +271,6 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                                                  'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
 
-            ##################################################################
-            # NEW LOGIC                                                      #
-            # Append table NER extractions to table csv file after each page #
-            ##################################################################
-            '''
-            TABLE APPEND NER
-            try:    # If page has a large diagram, catch Out of memory exception of CUDA
-                if page_tables:
-                    tok_table_lines, tok_line, extraction = [], None, []
-                    for table in page_tables:
-                        for line in table:
-                            tok_table_lines.append(Sentence(line, use_tokenizer=True))
-                    for tok_line in tok_table_lines:
-                        tagger.predict(tok_line)
-                    with open(f"C:/Data/Output/{titles} tables.csv", 'a', newline='', encoding="utf-8") as f:
-                        for tok_line in tok_table_lines:
-                            for entity in tok_line.get_spans('ner', min_score=threshold):
-                                if str(entity.tag) != 'tenderid' and entity.tag != 'marking' and entity.tag != '<unk>':
-                                    # print(f'-- Adding table extraction to CSV file --')
-                                    extraction.append(f'"{entity.text} , {entity.tag}"')
-                        if extraction:
-                            f.write("-------------------------- , ---------------------- \n")
-                            f.write('"Attribute , Type"')
-                            f.write("\n")
-                            res = list(OrderedDict.fromkeys(extraction))
-                            for tags in res:
-                                f.write(tags)
-                                f.write("\n")
-                            f.write("\n -------------------------- , ---------------------- \n")
-                    
-                    
-                    
-                retstr.truncate(0)
-                retstr.seek(0)
-            except RuntimeError:
-                print(f'Too Large page CUDA OFM error')
-                retstr.truncate(0)
-                retstr.seek(0)
-            '''
         retstr.truncate(0)  # Clear byte stream for new page extraction
         retstr.seek(0)
         pbar.update(1)
@@ -342,15 +303,15 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         cable_name = None
         cable_list = [
-            'hv cable', 'lv cable', 'hv cables', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable', 'ab', 'ug',
-            'control', 'areal', 'abc', 'bunched', 'pvc', 'armour', 'kv', 'lv cables'
-        ]  # 'cable', 'lt', 'lt cable', 'cables']
+            'hv cable', 'lv cable', 'hv cables', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable',
+            'control', 'areal bunched', 'abc', 'pvc', 'armour', 'kv', 'cable'
+         ]  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = [
-            'applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe'
-                                                                                                      'cable and accessories',
+            'applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe',
+            'transformer', 'dts',
             'applicable standard', 'applicable standards', 'system', 'switch',
-            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter'
-                                                                                                  'switchgear', 'bus',
+            'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter',
+            'switchgear', 'bus', 'line'
             'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
         ]
         cable_flag = 1
@@ -361,19 +322,21 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
             #########################################################
 
-            for entity in sentence.get_spans('ner', min_score=threshold):
+            for entity in sentence.get_spans('ner', min_score=threshold):  # Check all entities if in Accepted list
                 if str(entity.tag) == 'cableItype':
                     for y in cable_list:
                         if entity.text.lower().find(y) != -1 and len(entity) > 1:
                             cable_flag = 1
                             cable_name = entity.text
+                            print(f'\/\/\ Cable Type  {cable_name.upper()} \/\/\/')
                             break
                     continue
                 else:
+                    cable_flag = 0
                     continue
 
-            for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
+            for entity in sentence.get_spans('ner', min_score=threshold):  # Check all entities if in Forbidden list
+                if str(entity.tag) == 'cableItype' and cable_flag == 1:
                     print(f'- - - - Cable {entity.text.upper()}- - - - ')
                     for x in forbidden:  # Filtering results of Cable Type
                         if entity.text.lower().find(x) != -1:
@@ -394,7 +357,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             misc.setdefault(entity.tag, [])
                             misc[entity.tag].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
-                            print(f'= = = = = Cable Type  {cable_name.upper()} = = = = =')
+
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
                             continue
