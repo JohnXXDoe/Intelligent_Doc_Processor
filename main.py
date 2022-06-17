@@ -300,9 +300,9 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                                 f.write(tags)
                                 f.write("\n")
                             f.write("\n -------------------------- , ---------------------- \n")
-
-
-
+                    
+                    
+                    
                 retstr.truncate(0)
                 retstr.seek(0)
             except RuntimeError:
@@ -329,8 +329,9 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
     # LOG OUTPUT
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
-    dic = {}  # Dictionary for removing duplicate sentences
-    misc = {}  # Dictionary for packng and marking tags
+    sen = {}  # Dictionary for removing duplicate sentences
+    dic = {}  # Dictionary for saving output under Cable Name
+    misc = {}  # Dictionary for packing and marking tags
     with open(logfile, 'w', newline='', encoding="utf-8") as f:
         print('Writing values to file. . . ')
         print(f'////////////////////////////////////////////////////////////////////////////////')
@@ -342,21 +343,21 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         cable_name = None
         cable_list = [
-            'hv cable', 'lv cable', 'hv cables', 'power', 'xlpe', 'electric', 'lt cable', 'ht cable',
-            'control', 'areal bunched', 'abc', 'pvc', 'armour', 'kv', 'cable'
-         ]  # 'cable', 'lt', 'lt cable', 'cables']
+            'cable', 'line'
+        ]  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = [
-            'applicable', 'standard', 'standards', 'accessory', 'accessories', 'cable and accessory', 'pipe',
-            'transformer', 'dts',
+            'applicable', 'standard', 'standards', 'accessory', 'accessories', 'pipe',
+            'pipe',
             'applicable standard', 'applicable standards', 'system', 'switch',
             'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter',
-            'switchgear', 'bus', 'line'
+            'switchgear', 'bus', 'control',
             'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
         ]
-        cable_flag = 0
+        cable_flag = 1
         for sentence in sentences:
 
-            dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
+            sen.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
+
             #########################################################
             #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
             #########################################################
@@ -366,7 +367,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                     for y in cable_list:
                         if entity.text.lower().find(y) != -1 and len(entity) > 1:
                             cable_flag = 1
-                            cable_name = entity.text
+                            cable_name = entity.text.upper()
+                            dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
                             break
                     continue
                 else:
@@ -389,6 +391,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                 for entity in sentence.get_spans('ner', min_score=threshold):
                     if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(
                             entity.tag) != 'standard' and entity.tag != '<unk>':
+
                         if entity.tag in ['marking', 'packing'] and len(
                                 entity) > 2:  # Removing entity output and less than 2 word entities from final text for markings
                             misc.setdefault(entity.tag, [])
@@ -398,28 +401,39 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
                             continue
-                        elif len(sentence.to_plain_string()) > len(
-                                entity.text) + 3 and entity.tag != 'marking' and entity.tag != 'packing':
-                            dic[sentence.to_plain_string()].append(  # Adding specific formatted line to final text file
-                            f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
-                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                        print(
-                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                        elif (500 > len(sentence.to_plain_string()) > len(
+                                entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
+                            sen[sentence.to_plain_string()].append(     # Adding to sentence dictionary to avoid multiple same sentences
+                                f'Tag: >> {entity.text}, {entity.tag}')
+
+                            # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                            # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                            print(
+                                f'// =={entity.text}  ====  {entity.tag} ::LEN:: {len(sentence.to_plain_string())} :::://')  # Debugging/CLI output
+
+                for key in sen:
+                    if len(sen[key]) > 1:
+                        vals = '\n'.join(sen[key])
+                        dic[cable_name].append(f'{vals}\nSentence: {key}\n\n')
+                        vals = ''
+
+
         print(f'|___________________________________END OF FILE___________________________________________|')
 
-        for k, v in dic.items():
+        sorted_dic = OrderedDict(sorted(dic.items()))
+        for k, v in sorted_dic.items():
             if len(v) > 0:
+                f.writelines(f'CABLE TYPE: {k} \n\n')
                 res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
                 for tags in res:
                     f.writelines(f'{tags}')
-                f.writelines(f'\nSentence : {k} \n\n')
+
                 f.writelines(f'X----------------------------------X-------------------------------X \n')
         for k, v in misc.items():
             if len(v) > 0:
-                # res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
-                f.writelines(f'{k}\n')
-                for count, tags in enumerate(v):
+                res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
+                f.writelines(f'{str(k).upper()}\n')
+                for count, tags in enumerate(res):
                     f.writelines(f'\nSentence {count + 1} : {tags}')
 
                 f.writelines(f'\nX----------------------------------X-------------------------------X \n')
