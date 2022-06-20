@@ -32,6 +32,7 @@ import webbrowser
 #####################
 # ONLY FOR DEMO USE #
 #####################
+
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -274,6 +275,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             ##################################################################
             # NEW LOGIC                                                      #
             # Append table NER extractions to table csv file after each page #
+            # Commented to remove output table related NER Data              #
             ##################################################################
             '''
             TABLE APPEND NER
@@ -325,8 +327,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             print(f'Too Large page CUDA OFM error')
             continue
 
-    ###################
-    # LOG OUTPUT
+    ##################
+    #   LOG OUTPUT   #
     ##################
     logfile = f'C:/Data/Output/{titles}_summary.txt'
     sen = {}  # Dictionary for removing duplicate sentences
@@ -350,17 +352,16 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             'pipe',
             'applicable standard', 'applicable standards', 'system', 'switch',
             'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter',
-            'switchgear', 'bus', 'control',
-            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
+            'switchgear', 'bus', 'control', 'loose'
+                                            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
         ]
+
+        #########################################################
+        #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
+        #########################################################
+
         cable_flag = 1
         for sentence in sentences:
-
-            sen.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
-
-            #########################################################
-            #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
-            #########################################################
 
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) == 'cableItype':
@@ -403,20 +404,25 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             continue
                         elif (500 > len(sentence.to_plain_string()) > len(
                                 entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
-                            sen[sentence.to_plain_string()].append(     # Adding to sentence dictionary to avoid multiple same sentences
+                            sen.setdefault(sentence.to_plain_string(),
+                                           [])  # Create list initialised dictionary where Key = sentence
+                            sen[sentence.to_plain_string()].append(
+                                # Adding to sentence dictionary to avoid multiple same sentences
                                 f'Tag: >> {entity.text}, {entity.tag}')
 
                             # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} ::LEN:: {len(sentence.to_plain_string())} :::://')  # Debugging/CLI output
-
-                for key in sen:
-                    if len(sen[key]) > 1:
-                        vals = '\n'.join(sen[key])
-                        dic[cable_name].append(f'{vals}\nSentence: {key}\n\n')
-                        vals = ''
-
+        for key in sen:
+            print(f'KEY for SEN : {key} \\ \ \\ \ \ \\ \n\n\n\n')
+            if len(sen[key]) > 0:
+                res = list(
+                    OrderedDict.fromkeys(
+                        sen[key]))  # To remove multiple same Keys from different similar sentences
+                vals = '\n'.join(res)
+                dic[cable_name].append(f'{vals}\n{key}\n\n')
+                vals = ''
 
         print(f'|___________________________________END OF FILE___________________________________________|')
 
