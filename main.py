@@ -32,7 +32,6 @@ import webbrowser
 #####################
 # ONLY FOR DEMO USE #
 #####################
-
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -275,7 +274,6 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             ##################################################################
             # NEW LOGIC                                                      #
             # Append table NER extractions to table csv file after each page #
-            # Commented to remove output table related NER Data              #
             ##################################################################
             '''
             TABLE APPEND NER
@@ -302,9 +300,9 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                                 f.write(tags)
                                 f.write("\n")
                             f.write("\n -------------------------- , ---------------------- \n")
-                    
-                    
-                    
+
+
+
                 retstr.truncate(0)
                 retstr.seek(0)
             except RuntimeError:
@@ -414,19 +412,30 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} ::LEN:: {len(sentence.to_plain_string())} :::://')  # Debugging/CLI output
-        for key in sen:
-            print(f'KEY for SEN : {key} \\ \ \\ \ \ \\ \n\n\n\n')
-            if len(sen[key]) > 0:
-                res = list(
-                    OrderedDict.fromkeys(
-                        sen[key]))  # To remove multiple same Keys from different similar sentences
-                vals = '\n'.join(res)
-                dic[cable_name].append(f'{vals}\n{key}\n\n')
-                vals = ''
+                for key in sen:
+                    if len(sen[key]) > 0:
+                        print(f'Sentence saved under cable name{key}')
+                        dic[cable_name].append({key})
+
+        final = {}
+        cables = dic.keys()
+        final.fromkeys(cables)
+        for cable in cables:
+            final.setdefault(cable, [])
+            sentences = list(dic[cable])
+            print(f'Cable Type {cable}\n\nSentences : {sentences}')
+            for sentence in sentences:
+                if len(sen[sentence]) > 0:
+                    res = list(
+                        OrderedDict.fromkeys(
+                            sen[sentence]))  # To remove multiple same Keys from different similar sentences
+                    vals = '\n'.join(res)
+                    final[cable_name].append(f'{vals}\n{key}\n\n')
+                    vals = ''
 
         print(f'|___________________________________END OF FILE___________________________________________|')
 
-        sorted_dic = OrderedDict(sorted(dic.items()))
+        sorted_dic = OrderedDict(sorted(final.items()))
         for k, v in sorted_dic.items():
             if len(v) > 0:
                 f.writelines(f'CABLE TYPE: {k} \n\n')
