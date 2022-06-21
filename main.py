@@ -412,10 +412,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} ::LEN:: {len(sentence.to_plain_string())} :::://')  # Debugging/CLI output
-                for key in sen:
-                    if len(sen[key]) > 0:
-                        print(f'Sentence saved under cable name{key}')
-                        dic[cable_name].append({key})
+                dic[cable_name].append({sentence.to_plain_string()})
 
         final = {}
         cables = dic.keys()
