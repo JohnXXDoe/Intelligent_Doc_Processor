@@ -360,14 +360,14 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
 
         cable_flag = 1
         for sentence in sentences:
-
+            sen.setdefault(sentence.to_plain_string(),
+                           [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) == 'cableItype':
                     for y in cable_list:
                         if entity.text.lower().find(y) != -1 and len(entity) > 1:
                             cable_flag = 1
                             cable_name = entity.text.upper()
-                            dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
                             break
                     continue
                 else:
@@ -402,8 +402,6 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             continue
                         elif (500 > len(sentence.to_plain_string()) > len(
                                 entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
-                            sen.setdefault(sentence.to_plain_string(),
-                                           [])  # Create list initialised dictionary where Key = sentence
                             sen[sentence.to_plain_string()].append(
                                 # Adding to sentence dictionary to avoid multiple same sentences
                                 f'Tag: >> {entity.text}, {entity.tag}')
@@ -412,43 +410,48 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
                             print(
                                 f'// =={entity.text}  ====  {entity.tag} ::LEN:: {len(sentence.to_plain_string())} :::://')  # Debugging/CLI output
-                dic[cable_name].append({sentence.to_plain_string()})
 
-        final = {}
-        cables = dic.keys()
-        final.fromkeys(cables)
-        for cable in cables:
-            final.setdefault(cable, [])
-            sentences = list(dic[cable])
-            print(f'Cable Type {cable}\n\nSentences : {sentences}')
-            for sentence in sentences:
-                if len(sen[sentence]) > 0:
-                    res = list(
-                        OrderedDict.fromkeys(
-                            sen[sentence]))  # To remove multiple same Keys from different similar sentences
-                    vals = '\n'.join(res)
-                    final[cable_name].append(f'{vals}\n{key}\n\n')
-                    vals = ''
+                if len(sen[sentence.to_plain_string()]) > 0:  # Only add sentence to Cable dictionary if it has Entities
+                    dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
+                    dic[cable_name].append(sentence.to_plain_string())
+
+        ##############################
+        # CABLE LEVEL FILTRATION    #
+        ##############################
+        for k, values in dic.items():
+            f.writelines(f'\n______________________________________________________________________\n')
+            f.writelines(f'CABLE TYPE: {k}')
+            f.writelines(f'\n______________________________________________________________________')
+            for line in values:
+                tags = sen[line]
+
+                f.writelines(f'\n\nSentence: {line}\n')
+                for tag in tags:
+                    f.writelines(f'{tag}\n')
+        f.writelines(f'\nX----------------------------------X-----------------------------------X \n')
 
         print(f'|___________________________________END OF FILE___________________________________________|')
 
-        sorted_dic = OrderedDict(sorted(final.items()))
-        for k, v in sorted_dic.items():
-            if len(v) > 0:
-                f.writelines(f'CABLE TYPE: {k} \n\n')
-                res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
-                for tags in res:
-                    f.writelines(f'{tags}')
+        # sorted_dic = OrderedDict(sorted(final.items()))
+        # for k, v in sorted_dic.items():
+        #     if len(v) > 0:
+        #         f.writelines(f'CABLE TYPE: {k} \n\n')
+        #         res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
+        #         for tags in res:
+        #             f.writelines(f'{tags}')
+        #
+        #         f.writelines(f'X----------------------------------X-------------------------------X \n')
 
-                f.writelines(f'X----------------------------------X-------------------------------X \n')
         for k, v in misc.items():
             if len(v) > 0:
                 res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
-                f.writelines(f'{str(k).upper()}\n')
+                f.writelines(f'\n______________________________________________________________________\n')
+                f.writelines(f'{str(k).upper()}')
+                f.writelines(f'\n______________________________________________________________________\n')
                 for count, tags in enumerate(res):
                     f.writelines(f'\nSentence {count + 1} : {tags}')
 
-                f.writelines(f'\nX----------------------------------X-------------------------------X \n')
+        f.writelines(f'\nX----------------------------------X-----------------------------------X \n')
 
     colors = {
 
