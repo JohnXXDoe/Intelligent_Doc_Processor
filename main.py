@@ -353,7 +353,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             'switchgear', 'bus', 'line'
             'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
         ]
-        cable_flag = 1
+        cable_flag = 0
         for sentence in sentences:
 
             dic.setdefault(sentence.to_plain_string(), [])  # Create list initialised dictionary where Key = sentence
@@ -401,11 +401,11 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                         elif len(sentence.to_plain_string()) > len(
                                 entity.text) + 3 and entity.tag != 'marking' and entity.tag != 'packing':
                             dic[sentence.to_plain_string()].append(  # Adding specific formatted line to final text file
-                                f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
-                            # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
-                            # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                            print(
-                                f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                            f'Tag: >> {entity.text}, {entity.tag} |> {cable_name} - [{(round(entity.score, 4) * 100)}%]\n')
+                        # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
+                        # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
+                        print(
+                            f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
         print(f'|___________________________________END OF FILE___________________________________________|')
 
         for k, v in dic.items():
