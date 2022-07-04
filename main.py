@@ -52,7 +52,7 @@ def pdf2img(pdf, name, pagenums=None):
 
     # print(len(PDF))
     global total_pages
-    pages = convert_from_path(pdf, 500, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
+    pages = convert_from_path(pdf, 300, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
                               last_page=pagenums)
 
     # Counter to store images of each page of PDF to image
@@ -241,7 +241,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
         pagenum += 1  # To start page count from 1
         if start <= pagenum <= end:
             interpreter.process_page(page)
-            if len(retstr.getvalue()) < 30:
+            if len(retstr.getvalue()) < 50:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
@@ -350,8 +350,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             'pipe',
             'applicable standard', 'applicable standards', 'system', 'switch',
             'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter',
-            'switchgear', 'bus', 'control', 'loose'
-                                            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
+            'switchgear', 'bus', 'control', 'loose',
+            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
         ]
 
         #########################################################
@@ -421,13 +421,12 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
         for k, values in dic.items():
             f.writelines(f'\n______________________________________________________________________\n')
             f.writelines(f'CABLE TYPE: {k}')
-            f.writelines(f'\n______________________________________________________________________')
+            f.writelines(f'\n______________________________________________________________________\n\n')
             for line in values:
                 tags = sen[line]
-
-                f.writelines(f'\n\nSentence: {line}\n')
                 for tag in tags:
                     f.writelines(f'{tag}\n')
+                f.writelines(f'Sentence: {line}\n')
         f.writelines(f'\nX----------------------------------X-----------------------------------X \n')
 
         print(f'|___________________________________END OF FILE___________________________________________|')
@@ -444,7 +443,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
 
         for k, v in misc.items():
             if len(v) > 0:
-                res = list(OrderedDict.fromkeys(v))  # To remove multiple same Keys from different similar sentences
+                res = list(OrderedDict.fromkeys(v))  # Remove multiple same Keys from different similar sentences
                 f.writelines(f'\n______________________________________________________________________\n')
                 f.writelines(f'{str(k).upper()}')
                 f.writelines(f'\n______________________________________________________________________\n')
