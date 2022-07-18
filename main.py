@@ -363,7 +363,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             sen.setdefault(sentence.to_plain_string(),
                            [])  # Create list initialised dictionary where Key = sentence
             for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) == 'cableItype':
+                if str(entity.tag) == 'cableItype' and entity.score > 0.8:
                     for y in cable_list:
                         if entity.text.lower().find(y) != -1 and len(entity) > 1:
                             cable_flag = 1
@@ -374,7 +374,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                     continue
 
             for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
+                if str(entity.tag) == 'cableItype' and entity.score > 0.8:  # Check all entities if in Forbidden list
                     print(f'- - - - Cable {entity.text.upper()}- - - - ')
                     for x in forbidden:  # Filtering results of Cable Type
                         if entity.text.lower().find(x) != -1:
@@ -408,8 +408,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
 
                             # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                            print(
-                                f'// =={entity.text}  ====  {entity.tag} ::LEN:: {len(sentence.to_plain_string())} :::://')  # Debugging/CLI output
+                            print(f'{sentence.get_spans()}'
+                                f'// =={entity.text}  ====  {entity.tag} ::CONF:: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
 
                 if len(sen[sentence.to_plain_string()]) > 0:  # Only add sentence to Cable dictionary if it has Entities
                     dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
@@ -448,7 +448,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                 f.writelines(f'{str(k).upper()}')
                 f.writelines(f'\n______________________________________________________________________\n')
                 for count, tags in enumerate(res):
-                    f.writelines(f'\nSentence {count + 1} : {tags}')
+                    f.writelines(f'\nSentence {count + 1} : {tags}\n')
 
         f.writelines(f'\nX----------------------------------X-----------------------------------X \n')
 
