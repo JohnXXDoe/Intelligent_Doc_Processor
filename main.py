@@ -419,7 +419,7 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
         # CABLE LEVEL FILTRATION    #
         ##############################
         for k, values in dic.items():
-            f.writelines(f'\n______________________________________________________________________\n')
+            f.writelines(f'______________________________________________________________________\n')
             f.writelines(f'CABLE TYPE: {k}')
             f.writelines(f'\n______________________________________________________________________\n\n')
             for line in values:
