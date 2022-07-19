@@ -426,8 +426,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                 tags = sen[line]
                 for tag in tags:
                     f.writelines(f'{tag}\n')
-                f.writelines(f'Sentence: {line}\n')
-        f.writelines(f'\nX----------------------------------X-----------------------------------X \n')
+                f.writelines(f'Sentence: {line}\n\n')
+        f.writelines(f'X----------------------------------X-----------------------------------X \n')
 
         print(f'|___________________________________END OF FILE___________________________________________|')
 
