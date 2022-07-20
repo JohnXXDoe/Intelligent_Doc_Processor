@@ -424,7 +424,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
             f.writelines(f'\n______________________________________________________________________\n\n')
             for line in values:
                 tags = sen[line]
-                for tag in tags:
+                unq_tags = list(OrderedDict.fromkeys(tags))  # To remove multiple same Keys from different similar sentences
+                for tag in unq_tags:
                     f.writelines(f'{tag}\n')
                 f.writelines(f'Sentence: {line}\n\n')
         f.writelines(f'X----------------------------------X-----------------------------------X \n')
