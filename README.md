@@ -76,9 +76,21 @@
 
 ## Project Outputs
 ### HTML PDF marked render
+HTML output with highlighted spans and their entitiy names
+
 ![Product Name Screen Shot][product-screenshot]
 ### Text file summarised output
+Final text summary with Cable(specific entity type) filteration and extraction information such as Entity name and Sentence where entity was located
+
 ![Product Name Screen Shot][summary-output]
+### PDF input scanned table
+Example of complex scanned table (slight roatations and some table lines not present which is converted to Excel with correct cell locations using OCR and CV
+
+![GTP_in]
+### Scanned table converted to Excel
+OCR model is still reletively untrained leading to some missed characters
+
+![GTP_out]
 
 <!-- ABOUT THE PROJECT -->
 
@@ -162,7 +174,8 @@ After the addition of table detection this project will be able to keep data int
 - [ ] Add Changelog
 - [/] Add Screenshots
 - [ ] Add Training explanation
-- [ ] Explain Dataset creator 
+- [ ] Explain Dataset creator
+- [ ] Core library changes
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -242,4 +255,6 @@ Open source libraries used to make this project possible:
 [linkedin-url]: https://linkedin.com/in/utkarsh-kharayat-23068b179
 [product-screenshot]: images/IDP.PNG
 [rejection]: images/Rejection.PNG
-[summary-output]: images/summary_out.PNG
+[summary-output]: images/NER_output_2022.PNG
+[GTP_in]: images/GTP_PDF.PNG
+[GTP_out]: images/GTP_OCR_convert.PNG
