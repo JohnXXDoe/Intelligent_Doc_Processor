@@ -210,11 +210,11 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
     :return: None
     """
 
-    with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:  # To decrypt Permission pdfs
-        pdf_f.save()
+    # with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:  # To decrypt Permission pdfs
+    #     pdf_f.save()
     data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048layers_std\final-model.pt')  # 2048layers_std/final-model.pt
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048_Aug2\final-model.pt')  # 2048layers_std
     # print(tagger)
     open(f"C:/Data/Output/{titles}_OCR.txt", "w").close()  # Clear/Wipe OCR txt file
     open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
@@ -343,14 +343,14 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
         f.writelines(f'//////////////////////////////////////////////////////////////////////////////// \n')
         cable_name = None
         cable_list = [
-            'cable', 'line'
+            'cable', 'line', 'covered conductors'
         ]  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = [
             'applicable', 'standard', 'standards', 'accessory', 'accessories', 'pipe',
             'pipe',
             'applicable standard', 'applicable standards', 'system', 'switch',
             'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter',
-            'switchgear', 'bus', 'control', 'loose',
+            'switchgear', 'bus', 'control', 'loose','lugs'
             'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
         ]
 
@@ -377,8 +377,8 @@ def ner(pdf, titles, im_loc, page_limits=(0, 0)):
                 if str(entity.tag) == 'cableItype' and entity.score > 0.8:  # Check all entities if in Forbidden list
                     print(f'- - - - Cable {entity.text.upper()}- - - - ')
                     for x in forbidden:  # Filtering results of Cable Type
-                        if entity.text.lower().find(x) != -1:
-                            print(f'X X X X X Cable Type Rejected {entity.text.upper()} X X X X X')
+                        if entity.text.lower().find(x) != -1 and len(entity.text) == len(x):
+                            print(f'X X X X X Cable Type Rejected {entity.text.upper()} > {x.upper()} X X X X X')
                             cable_flag = 0
                             break
                     break
@@ -507,5 +507,5 @@ if __name__ == '__main__':
 
 """
 CLI command :
-                E:\PycharmProjects\DL\venv\scripts\python.exe E:\PycharmProjects\DL\Doc_IMG-OCR\main.py -c 0.7 -f EIL //
+                E:\PycharmProjects\DL\venv\scripts\python.exe E:\PycharmProjects\DL\Doc_IMG-OCR\main.py -c 0.7 -f TEND00012790 //
 """

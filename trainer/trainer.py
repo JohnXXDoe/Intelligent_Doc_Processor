@@ -208,12 +208,12 @@ def flair_ner():
 
     # 7. run fine-tuning
 
-    # trainer.fine_tune('resources/taggers/2048layers_std',
-    #                   learning_rate=5.0e-6,
-    #                   mini_batch_size='2',
-    #                   max_epochs=200,
-    #                   use_final_model_for_eval=True,
-    #                   embeddings_storage_mode='none')
+    trainer.fine_tune('resources/taggers/2048_Aug_19',
+                      learning_rate=5.0e-6,
+                      mini_batch_size=2,
+                      max_epochs=220,
+                      use_final_model_for_eval=True,
+                      embeddings_storage_mode='none')
 
     # training
     # trainer.train('resources/taggers/2048layers',
@@ -221,14 +221,14 @@ def flair_ner():
     #               mini_batch_size=8,
     #               embeddings_storage_mode='none',
     #               max_epochs=300)
-    path = 'resources/taggers/2048layers_std'
-    trained_model = SequenceTagger.load(path + '/final-model.pt')
-    trainer.resume(trained_model,
-                   base_path=path + '-new',
-                   max_epochs=200,
-                   mini_batch_size=2,
-                   monitor_train=True,
-                   )
+    # path = 'resources/taggers/2048layers_std'
+    # trained_model = SequenceTagger.load(path + '/final-model.pt')
+    # trainer.resume(trained_model,
+    #                base_path=path + '-new',
+    #                max_epochs=200,
+    #                mini_batch_size=2,
+    #                monitor_train=True,
+    #                )
 
 
 if __name__ == '__main__':
