@@ -40,7 +40,6 @@ warnings.filterwarnings("ignore")
 #####################
 # ONLY FOR DEMO USE #
 #####################
-
 def pdf2img(pdf, name, pagenums=None):
     """
     Takes PDF page and converts it to png image for running OCR
