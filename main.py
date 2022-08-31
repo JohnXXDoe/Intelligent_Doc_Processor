@@ -88,8 +88,12 @@ def table_extraction(pdf, name, page, type):
             return None
         except IndexError:  # list index out of range:
             # index out of range
-            print('Index Error')
-            return None
+            try:
+                tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # bypass index error
+                print(f'\nSwitching to OCR extraction of Table at page {page}')
+            except Exception as e:
+                print('Index Error - ' + e)
+                return None
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
     tables.export(f'C:/Data/Output/{name} tables.csv', f='txt',
