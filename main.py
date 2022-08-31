@@ -312,7 +312,7 @@ def ner(pdf, titles, im_loc, page_limits=(0,0), threshold=0.75):
         print(f'////////////////// E X T R A C T I O N    R E S U L T   ///////////////////////')
         print(f'////////////////////////////////////////////////////////////////////////////////\n')
         print(f'-------------------------------------------------------------------------------\n\n')
-        print(f'//  Text ,   Entity Tag ,  Confidence percentage   //')
+        print(f'//  Text ,   Entity Tag ,  Confidence percentage   //\n')
         f.writelines(r'/////////////////////////////////////////////////////////////////////////////////////////////'
                     r'///////////////////////////////// \par')
         f.writelines(r'/////////////////////////////////// \b E X T R A C T I O N    R E S U L T \b0  /////////////////////'
@@ -350,7 +350,7 @@ def ner(pdf, titles, im_loc, page_limits=(0,0), threshold=0.75):
                     continue
             for entity in sentence.get_spans('ner', min_score=threshold):
                 if str(entity.tag) == 'cableItype' and entity.score > 0.8:  # Check all entities if in Forbidden list
-                    print(f'- - - - Cable {entity.text.upper()}- - - - ')
+                    #print(f'\n- - - - Cable {entity.text.upper()}- - - - ')
                     for x in forbidden:  # Filtering results of Cable Type
                         if entity.text.lower().find(x) != -1 and len(entity.text) == len(x):
                             print(f'X X X X X Cable Type Rejected {entity.text.upper()} > {x.upper()} X X X X X')
@@ -368,9 +368,9 @@ def ner(pdf, titles, im_loc, page_limits=(0,0), threshold=0.75):
                             misc.setdefault(entity.tag, [])
                             misc[entity.tag].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
-                            print(f'= = = = = Cable Type  {cable_name.upper()} = = = = =\n')
+                            print(f'\n= = = = = Cable Type  {cable_name.upper()} = = = = =')
                             print(
-                                f'// =={entity.text}  ====  {entity.tag} :::: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                                f'=== {entity.text} === {entity.tag} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
                             continue
                         elif (500 > len(sentence.to_plain_string()) > len(
                                 entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
@@ -380,7 +380,7 @@ def ner(pdf, titles, im_loc, page_limits=(0,0), threshold=0.75):
                                 f'{ent} >> {entity.text} ')
                             # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                            print(f'\n// =={ent}  ====  {entity.tag} ::CONF:: {(round(entity.score, 4) * 100)}% :::://')  # Debugging/CLI output
+                            print(f'=== {entity.text} === {ent} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
                 if len(sen[sentence.to_plain_string()]) > 0:  # Only add sentence to Cable dictionary if it has Entities
                     dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
                     dic[cable_name].append(sentence.to_plain_string())
