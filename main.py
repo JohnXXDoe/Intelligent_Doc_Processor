@@ -92,7 +92,7 @@ def table_extraction(pdf, name, page, type):
                 tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # bypass index error
                 print(f'\nSwitching to OCR extraction of Table at page {page}')
             except Exception as e:
-                print('Index Error - ' + e)
+                print('Index Error - ' + str(e))
                 return None
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
@@ -188,7 +188,7 @@ def read_dic():
             key_mappings.fromkeys(key)
             key_mappings[key] = value
 
-def ner(pdf, titles, im_loc, page_limits=(0,0), threshold=0.75):
+def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
     """
     Takes PDF runs it page by page to extract its text using OCR or text extraction to run NER model and save its output as text summary and temp HTML render
     :param page_limits: start and end page number for extraction
@@ -425,9 +425,12 @@ def ner(pdf, titles, im_loc, page_limits=(0,0), threshold=0.75):
         f.write(actual)
     webbrowser.open(url)
 
-    user = input("Do you want to run another file? (y/n): ")
-    if user.lower() in ['yes', 'y']:
-        run_single_file()
+    if run_mode == 0:   # If single file run, ask if user wants to run another file
+        print(f'\n\n\n|-----------------------------------------------------------------------------------------|')
+        print(f'|_________________________________________________________________________________________|\n')
+        user = input("Do you want to run another file? (y/n): ")
+        if user.lower() in ['yes', 'y']:
+            run_single_file()
 
 def display_menu(start, end, filename, conf):
     """
@@ -451,7 +454,7 @@ def display_menu(start, end, filename, conf):
 def run_single_file():
     s_page = 0
     e_page = 0
-    file_name = input("\n>> Enter file name (eg. KGSP_3C): ")
+    file_name = input("\n>> Enter file name (eg. KSEB_3CX): ")
     s_page = input("\n>> Enter start page (0 if you want to run all): ")
     e_page = input("\n>> Enter end page(0 if you want to run all): ")
     PDF_file = f'C:/Data/test/{file_name}.pdf'
@@ -464,7 +467,7 @@ def run_single_file():
     # img_ocr(img_loc, pdfname)
     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
     img_loc = r'C:/Data/Output/OCR/images'
-    ner(PDF_file, file_name, img_loc, pages)
+    ner(PDF_file, file_name, img_loc, 0, pages)
 
 if __name__ == '__main__':
     print(f'\n\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -486,7 +489,7 @@ if __name__ == '__main__':
             for path in root_dir:
                 if path.is_file():
                     i += 1
-                    a = path.name.split('.pdf')
+                    a = path.name.lower().split('.pdf')
                     b = a[0]
                     files = b.replace(' ', '_')
                     PDF_file = f'C:/Data/test/{files}.pdf'
@@ -496,13 +499,13 @@ if __name__ == '__main__':
                     pages=(0, 0)
                     args = parser.parse_args()
                     threshold = args.threshold
-                    display_menu(None, None, files, threshold)
+                    display_menu(None, None, files.upper(), threshold)
                     # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
                     # pdf2img(PDF_file, pdfname)
                     # img_ocr(img_loc, pdfname)
                     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
                     img_loc = r'C:/Data/Output/OCR/images'
-                    ner(PDF_file, files, img_loc, pages)
+                    ner(PDF_file, files, img_loc, 0, pages)
     else:
         run_single_file()
 
