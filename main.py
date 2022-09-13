@@ -3,6 +3,7 @@ import camelot
 import argparse
 import os
 import huggingface_hub
+
 TRANSFORMERS_OFFLINE = 1
 from pikepdf import Pdf
 from flair.data import Sentence
@@ -30,7 +31,10 @@ import webbrowser
 # ONLY FOR DEMO USE #
 #####################
 import warnings
+
 warnings.filterwarnings("ignore")
+
+
 #####################
 # ONLY FOR DEMO USE #
 #####################
@@ -45,7 +49,7 @@ def pdf2img(pdf, name, pagenums=None):
     # print(len(PDF))
     global total_pages
     pages = convert_from_path(pdf, 300, poppler_path=r"C:\poppler-0.68.0\bin", timeout=10000, first_page=pagenums,
-                            last_page=pagenums)
+                              last_page=pagenums)
     # Counter to store images of each page of PDF to image
     image_counter = 1
     #
@@ -65,6 +69,7 @@ def pdf2img(pdf, name, pagenums=None):
         # Increment the counter to update filename
         image_counter = image_counter + 1
     total_pages = image_counter
+
 
 def table_extraction(pdf, name, page, type):
     """
@@ -97,7 +102,7 @@ def table_extraction(pdf, name, page, type):
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
     tables.export(f'C:/Data/Output/{name} tables.csv', f='txt',
-                compress=True)  # json, excel, html, markdown, sqlite, txt
+                  compress=True)  # json, excel, html, markdown, sqlite, txt
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
     tablesfin, item, dic, header, table_line = [], '', {}, 0, []
     for table in text:
@@ -124,6 +129,7 @@ def table_extraction(pdf, name, page, type):
     else:
         return None
 
+
 def img_ocr(location, filename):  # For Image/Scanned PDF to text
     """
     Opens PNG image (single page) and runs OCR model to extract text
@@ -139,9 +145,9 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
                                 recog_network='custom_example')  # recog_network='custom_example' this needs to run only once to load the model into memory
         try:
             result = reader.readtext(loc, height_ths=0.2,
-                                    ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch',
-                                    y_ths=0.2,
-                                    x_ths=50)
+                                     ycenter_ths=0.3, width_ths=0.5, paragraph=True, decoder='wordbeamsearch',
+                                     y_ths=0.2,
+                                     x_ths=50)
         except Exception as e:
             result = ''  # Exception occured.
             print(e)
@@ -175,6 +181,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         '''
     return str(total_text)
 
+
 def read_dic():
     """
     Read dictionary mappings for converting entity names to Normal text
@@ -188,9 +195,11 @@ def read_dic():
             key_mappings.fromkeys(key)
             key_mappings[key] = value
 
-def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
+
+def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     """
     Takes PDF runs it page by page to extract its text using OCR or text extraction to run NER model and save its output as text summary and temp HTML render
+    :param run_mode: defines if it is single run mode or all run
     :param page_limits: start and end page number for extraction
     :param pdf: PDF file location
     :param titles: Name of PDF file
@@ -201,7 +210,7 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
     #     pdf_f.save()
     data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
-        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048_Aug_19\final-model.pt')  # 2048layers_std
+        r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048_sep_06\final-model.pt')  # 2048layers_std
     # print(tagger)
     open(f"C:/Data/Output/{titles}_OCR.txt", "w").close()  # Clear/Wipe OCR txt file
     open(f"C:/Data/Output/{titles} tables.csv", "w").close()  # Clear/Wipe if there is older version of table.csv
@@ -234,7 +243,7 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
-                                                'lattice_ocr')  # Run OCR based table extraction
+                                                   'lattice_ocr')  # Run OCR based table extraction
                 except Exception as e:
                     page_tables = None
                     print(f'Page  {pagenum} \n!!> {e} .')
@@ -242,16 +251,16 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
-                                                'lattice')  # Returns list of tables in the specified page
+                                                   'lattice')  # Returns list of tables in the specified page
                 except IndexError:
                     page_tables = table_extraction(pdf, titles, pagenum,
-                                                'lattice_ocr')
+                                                   'lattice_ocr')
                 except Exception as e:
                     page_tables = table_extraction(pdf, titles, pagenum,
-                                                'lattice_ocr')
+                                                   'lattice_ocr')
                     print(f'\nPage  {pagenum} !!> {e} .')
                 data += retstr.getvalue().decode('ascii',
-                                                'ignore')  # add extracted text from bytesIO to data variable
+                                                 'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
             ##################################################################
             # NEW LOGIC                                                      #
@@ -318,32 +327,33 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
         print(f'-------------------------------------------------------------------------------\n\n')
         print(f'//  Text ,   Entity Tag ,  Confidence percentage   //\n')
         f.writelines(r'/////////////////////////////////////////////////////////////////////////////////////////////'
-                    r'///////////////////////////////// \par')
-        f.writelines(r'/////////////////////////////////// \b E X T R A C T I O N    R E S U L T \b0  /////////////////////'
-                    r'////// \par')
+                     r'///////////////////////////////// \par')
+        f.writelines(
+            r'/////////////////////////////////// \b E X T R A C T I O N    R E S U L T \b0  /////////////////////'
+            r'////// \par')
         f.writelines(r'/////////////////////////////////////////////////////////////////////////////////////'
-                    r'///////////////////////////////////////\par')
+                     r'///////////////////////////////////////\par')
         cable_name = None
         cable_list = [
             'cable', 'line', 'covered conductors'
         ]  # 'cable', 'lt', 'lt cable', 'cables']
         forbidden = [
             'applicable', 'standard', 'standards', 'accessory', 'accessories', 'pipe',
-            'pipe',
             'applicable standard', 'applicable standards', 'system', 'switch',
             'station', 'circuit', 'isolator', 'hdpe', 'mccb', 'breaker', 'pole', 'duct', 'fence', 'meter',
-            'switchgear', 'bus', 'control', 'loose','lugs'
-            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug', 'ABBREVIATION'
+            'switchgear', 'bus', 'control', 'loose', 'lugs',
+            'transformer', 'surge', 'insulator', 'ring', 'smoke', 'lug',
+            'ABBREVIATION'
         ]
         #########################################################
         #        CUSTOMISATION FOR TENDER SPECIFICATIONS        #
-        #########################################################
+        ########################################################
         cable_flag = 1
         for sentence in sentences:
             sen.setdefault(sentence.to_plain_string(),
-                        [])  # Create list initialised dictionary where Key = sentence
-            for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) == 'cableItype' and entity.score > 0.8:
+                           [])  # Create list initialised dictionary where Key = sentence
+            for entity in sentence.get_spans('ner', min_score=0.8):
+                if str(entity.tag) == 'cableItype':
                     for y in cable_list:
                         if entity.text.lower().find(y) != -1 and len(entity) > 1:
                             cable_flag = 1
@@ -352,18 +362,25 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
                     continue
                 else:
                     continue
-            for entity in sentence.get_spans('ner', min_score=threshold):
-                if str(entity.tag) == 'cableItype' and entity.score > 0.8:  # Check all entities if in Forbidden list
-                    #print(f'\n- - - - Cable {entity.text.upper()}- - - - ')
-                    for x in forbidden:  # Filtering results of Cable Type
-                        if entity.text.lower().find(x) != -1 and len(entity.text) == len(x):
-                            print(f'X X X X X Cable Type Rejected {entity.text.upper()} > {x.upper()} X X X X X')
-                            cable_flag = 0
+
+            for entity in sentence.get_spans('ner', min_score=0.8):
+                if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
+                    # print(f'- - - - Cable {entity.text.upper()}- - - - ')
+                    cable_splits = (entity.text.lower().split(' ')) # Split cable name into words
+                    for cable_split in cable_splits:
+                        for x in forbidden:  # Filtering results of Cable Type
+                            # print(f'{cable_split}  matching with {x}')
+                            if cable_split.find(x) != -1 and len(cable_split) == len(x):
+                                print(f'X X X X X Cable Type Rejected {cable_split.upper()} > {x.upper()} X X X X X')
+                                cable_flag = 0
+                                break
+                        if cable_flag == 0: # if cable word is detected in forbidden list, flag = 0 and break
                             break
                     break
                 else:
                     continue
             if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
+
                 for entity in sentence.get_spans('ner', min_score=threshold):
                     if entity.tag != 'cableItype' and str(entity.tag) != 'tenderid' and str(
                             entity.tag) != 'standard' and entity.tag != '<unk>':
@@ -372,19 +389,20 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
                             misc.setdefault(entity.tag, [])
                             misc[entity.tag].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
-                            print(f'\n= = = = = Cable Type  {cable_name.upper()} = = = = =')
                             print(
                                 f'=== {entity.text} === {entity.tag} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
                             continue
                         elif (500 > len(sentence.to_plain_string()) > len(
                                 entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
+                            print(f'\n= = = = = Cable Type  {cable_name.upper()} = = = = =\n')
                             ent = entity.tag.replace('I', ' ')  # Replace insulation'I'sheath with a blank = insulation sheath
                             sen[sentence.to_plain_string()].append(
                                 # Adding to sentence dictionary to avoid multiple same sentences
                                 f'{ent} >> {entity.text} ')
                             # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                            print(f'=== {entity.text} === {ent} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
+                            print(
+                                f'=== {entity.text} === {ent} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
                 if len(sen[sentence.to_plain_string()]) > 0:  # Only add sentence to Cable dictionary if it has Entities
                     dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
                     dic[cable_name].append(sentence.to_plain_string())
@@ -398,7 +416,8 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
             f.writelines(r'\par______________________________________________________________________\par\par')
             for line in values:
                 tags = sen[line]
-                unq_tags = list(OrderedDict.fromkeys(tags))  # To remove multiple same Keys from different similar sentences
+                unq_tags = list(
+                    OrderedDict.fromkeys(tags))  # To remove multiple same Keys from different similar sentences
                 for tag in unq_tags:
                     f.writelines(fr'\b {tag} \par \b0 \par')
                 f.writelines(fr' \ul Sentence \ul0: {line} \par\par')
@@ -425,12 +444,13 @@ def ner(pdf, titles, im_loc, run_mode, page_limits=(0,0), threshold=0.75):
         f.write(actual)
     webbrowser.open(url)
 
-    if run_mode == 0:   # If single file run, ask if user wants to run another file
+    if run_mode == 0:  # If single file run, ask if user wants to run another file
         print(f'\n\n\n|-----------------------------------------------------------------------------------------|')
         print(f'|_________________________________________________________________________________________|\n')
         user = input("Do you want to run another file? (y/n): ")
         if user.lower() in ['yes', 'y']:
             run_single_file()
+
 
 def display_menu(start, end, filename, conf):
     """
@@ -451,23 +471,23 @@ def display_menu(start, end, filename, conf):
     if start: print(f'|::::::::::::::::       Page limits      : {start} - {end}   :::::::::::::::::|')
     print(f'|______________________________________________________________________________|')
 
-def run_single_file():
-    s_page = 0
-    e_page = 0
-    file_name = input("\n>> Enter file name (eg. KSEB_3CX): ")
-    s_page = input("\n>> Enter start page (0 if you want to run all): ")
-    e_page = input("\n>> Enter end page(0 if you want to run all): ")
-    PDF_file = f'C:/Data/test/{file_name}.pdf'
 
-    threshold = 0.75
-    pages = (int(s_page), int(e_page))
-    display_menu(s_page, e_page, file_name, threshold)  # display main menu with variables
+def run_single_file():
+    file_name = input("\n>> Enter file name (eg. KSEB_3CX): ")
+    s_page = int(input("\n>> Enter start page (0 if you want to run all): ") or 0)
+    e_page = int(input("\n>> Enter end page (0 if you want to run all): ") or 0)
+    PDF_file = f'C:/Data/test/{file_name}.pdf'
+    thresh = float(input("\n>> Enter threshold for prediction confidence (0.0 - 1.0): ") or 0.7)
+
+    pages = (s_page, e_page)
+    display_menu(s_page, e_page, file_name, thresh)  # display main menu with variables
     # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
     # pdf2img(PDF_file, pdfname)
     # img_ocr(img_loc, pdfname)
     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
     img_loc = r'C:/Data/Output/OCR/images'
-    ner(PDF_file, file_name, img_loc, 0, pages)
+    ner(PDF_file, file_name, img_loc, 0, pages, threshold=thresh)
+
 
 if __name__ == '__main__':
     print(f'\n\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -475,37 +495,36 @@ if __name__ == '__main__':
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++///////////////     INTELLIGENT - DOCUMENT - PROCESSOR    ///////////////////+++')
+    print(f'+++////////////////     INTELLIGENT - DOCUMENT - PROCESSOR    //////////////////+++')
     print(f'+++////////////////          HAVELLS NEW TECHNOLOGIES        ///////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n')
-    user = input("Do you want to run all files in the folder? (y/n): ")
+    user = (input("Do you want to run all files in the folder? (y/n): ") or 'n')
     if user.lower() in ['yes', 'y']:
         i = 0
+        thresh = float(input("\n>> Enter threshold for prediction confidence (0.0 - 1.0): ") or 0.7)
         with os.scandir('C:/Data/Test') as root_dir:
             for path in root_dir:
                 if path.is_file():
                     i += 1
-                    a = path.name.lower().split('.pdf')
+                    a = path.name.lower().split('.')
+                    if a[-1] != 'pdf':  # skip if not PDF
+                        print(f'\n{path.name.upper()} File not a PDF, skipping\n')
+                        continue
                     b = a[0]
                     files = b.replace(' ', '_')
                     PDF_file = f'C:/Data/test/{files}.pdf'
-                    parser = argparse.ArgumentParser()
-                    parser.add_argument('-c', dest='threshold', help='Default = 0.75  , Limit: [0,1]', type=float,
-                                        default=0.75)
-                    pages=(0, 0)
-                    args = parser.parse_args()
-                    threshold = args.threshold
-                    display_menu(None, None, files.upper(), threshold)
+                    pages = (0, 0)
+                    display_menu(None, None, files.upper(), thresh)
                     # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
                     # pdf2img(PDF_file, pdfname)
                     # img_ocr(img_loc, pdfname)
                     # searchable_ocr(img_loc)  # For converting image to text embedded PDF
                     img_loc = r'C:/Data/Output/OCR/images'
-                    ner(PDF_file, files, img_loc, 0, pages)
+                    ner(PDF_file, files, img_loc, 1, pages, threshold=thresh)
     else:
         run_single_file()
 
