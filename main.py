@@ -3,6 +3,7 @@ import camelot
 import argparse
 import os
 import huggingface_hub
+import pyodbc
 
 TRANSFORMERS_OFFLINE = 1
 from pikepdf import Pdf
@@ -38,6 +39,17 @@ warnings.filterwarnings("ignore")
 #####################
 # ONLY FOR DEMO USE #
 #####################
+
+
+connection_string = ("Driver={SQL Server Native Client 11.0};"
+            "Server=SFA-DEV\SFADEVNEW;"
+            "Database=DB_IDP;"
+            "UID=App_User_IDP;"
+            "PWD=Havells@123;")
+connection = pyodbc.connect(connection_string)
+
+cursor = connection.cursor()
+
 def pdf2img(pdf, name, pagenums=None):
     """
     Takes PDF page and converts it to png image for running OCR
@@ -471,6 +483,27 @@ def display_menu(start, end, filename, conf):
     if start: print(f'|::::::::::::::::       Page limits      : {start} - {end}   :::::::::::::::::|')
     print(f'|______________________________________________________________________________|')
 
+def getFiles():
+    b=[]
+    cursor.execute('Exec isGett')
+    for row in cursor:
+        b.append(row[0])
+    return b
+
+def inProcess(flag,filename):
+    if flag==True:
+        storedProc = "Exec inProc @filename =?"
+        params = ("BHEL_L")
+        cursor.execute(storedProc, params)
+        cursor.commit()
+
+
+def isGenerated(flag,filename):
+    if flag==True:
+        storedProc = "Exec isGenerate @filename =?"
+        params = ("BHEL_L")
+        cursor.execute(storedProc, params)
+        cursor.commit()
 
 def run_single_file():
     file_name = input("\n>> Enter file name (eg. KSEB_3CX): ")
@@ -489,7 +522,10 @@ def run_single_file():
     ner(PDF_file, file_name, img_loc, 0, pages, threshold=thresh)
 
 
+
+
 if __name__ == '__main__':
+    getFiles()
     print(f'\n\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
