@@ -1,4 +1,6 @@
 import csv
+import time
+
 import camelot
 import os
 import pyodbc
@@ -226,6 +228,8 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     """
     # with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:  # To decrypt Permission pdfs
     #     pdf_f.save()
+    inProcess(True, pdf)    # Set File in_Process flag to 1 in MSSQL
+
     data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
         r'E:\PycharmProjects\DL\Doc_IMG-OCR\trainer\resources\taggers\2048_sep_06\final-model.pt')  # 2048layers_std
@@ -462,15 +466,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
         url = 'file://' + f.name
         f.write(actual)
     webbrowser.open(url)
-
-
-
-    if run_mode == 0:  # If single file run, ask if user wants to run another file
-        print(f'\n\n\n|-----------------------------------------------------------------------------------------|')
-        print(f'|_________________________________________________________________________________________|\n')
-        user = input("Do you want to run another file? (y/n): ")
-        if user.lower() in ['yes', 'y']:
-            run_single_file()
+    isGenerated(True, pdf)
 
 
 def display_menu(start, end, filename, conf):
@@ -504,7 +500,7 @@ def getFiles():
 def inProcess(flag, filename):
     if flag == True:
         storedProc = "Exec inProc @filename =?"
-        params = ("BHEL_L")
+        params = (filename)
         cursor.execute(storedProc, params)
         cursor.commit()
 
@@ -512,7 +508,7 @@ def inProcess(flag, filename):
 def isGenerated(flag, filename):
     if flag == True:
         storedProc = "Exec isGenerate @filename =?"
-        params = ("BHEL_L")
+        params = (filename)
         cursor.execute(storedProc, params)
         cursor.commit()
 
@@ -526,51 +522,27 @@ def run_single_file(file_name,s_page=0, e_page=0, thresh=0.75):
     ner(PDF_file, file_name, img_loc, 0, pages, threshold=thresh)
 
 
-def scheduler():
+def file_check_schedule():
     files = getFiles()
+    print(f'Files in pipeline {" ".join(files)}\n')
     if len(files) > 0:
         for single_file in files:
+            print(f'File to be run {single_file}')
             run_single_file(single_file)
 
 if __name__ == '__main__':
-    files = getFiles()
-    print(f'\n\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++////////////////     INTELLIGENT - DOCUMENT - PROCESSOR    //////////////////+++')
-    print(f'+++////////////////          HAVELLS NEW TECHNOLOGIES        ///////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
-    print(f'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n')
-    user = (input("Do you want to run all files in the folder? (y/n): ") or 'n')
-    if user.lower() in ['yes', 'y']:
-        i = 0
-        thresh = float(input("\n>> Enter threshold for prediction confidence (0.0 - 1.0): ") or 0.7)
-        with os.scandir('C:/Data/Test') as root_dir:
-            for path in root_dir:
-                if path.is_file():
-                    i += 1
-                    a = path.name.lower().split('.')
-                    if a[-1] != 'pdf':  # skip if not PDF
-                        print(f'\n{path.name.upper()} File not a PDF, skipping\n')
-                        continue
-                    b = a[0]
-                    files = b.replace(' ', '_')
-                    PDF_file = f'C:/Data/test/{files}.pdf'
-                    pages = (0, 0)
-                    display_menu(None, None, files.upper(), thresh)
-                    # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
-                    # pdf2img(PDF_file, pdfname)
-                    # img_ocr(img_loc, pdfname)
-                    # searchable_ocr(img_loc)  # For converting image to text embedded PDF
-                    img_loc = r'C:/Data/Output/OCR/images'
-                    ner(PDF_file, files, img_loc, 1, pages, threshold=thresh)
-    else:
-        run_single_file()
+    schedule.every(10).seconds.do(file_check_schedule)
+    while True:
+        n = schedule.idle_seconds()
+        print(f'Waiting {n} seconds before next run\n')
+        if n is None:
+            # no more jobs
+            break
+        elif n > 0:
+            # sleep exactly the right amount of time
+            time.sleep(n)
+        schedule.run_pending()
+
 
 """
 CLI command :
