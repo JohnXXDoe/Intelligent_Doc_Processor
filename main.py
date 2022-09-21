@@ -1,9 +1,8 @@
 import csv
 import camelot
-import argparse
 import os
-import huggingface_hub
 import pyodbc
+import schedule
 
 TRANSFORMERS_OFFLINE = 1
 from pikepdf import Pdf
@@ -35,20 +34,20 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-
 #####################
 # ONLY FOR DEMO USE #
 #####################
 
 
 connection_string = ("Driver={SQL Server Native Client 11.0};"
-            "Server=SFA-DEV\SFADEVNEW;"
-            "Database=DB_IDP;"
-            "UID=App_User_IDP;"
-            "PWD=Havells@123;")
+                     "Server=SFA-DEV\SFADEVNEW;"
+                     "Database=DB_IDP;"
+                     "UID=App_User_IDP;"
+                     "PWD=Havells@123;")
 connection = pyodbc.connect(connection_string)
 
 cursor = connection.cursor()
+
 
 def pdf2img(pdf, name, pagenums=None):
     """
@@ -179,12 +178,19 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
             cv2.rectangle(image, tl, br, (0, 0, 255), 4)
             cv2.putText(image, text, (tl[0], tl[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 90, 200), 5)
+
         file = open(f"C:/Data/Output/{filename}_OCR.txt", 'a')
         for (bbox, text) in result:  # , prob
             total_text += str(text) + '\n'
             file.write(str(text))
             file.write('\n')
         file.close()
+        # Remove image file after processing to save space
+        for filename in os.listdir(location):
+            if filename.endswith('.png'):
+                os.remove(f'{filename}_{page}.png')
+                print(f'Deleting OCR image file {filename}_{page}.png')
+
         # Show the output image
         '''
         cv2.namedWindow('PDF Output', cv2.WINDOW_NORMAL)
@@ -378,7 +384,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
             for entity in sentence.get_spans('ner', min_score=0.8):
                 if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
                     # print(f'- - - - Cable {entity.text.upper()}- - - - ')
-                    cable_splits = (entity.text.lower().split(' ')) # Split cable name into words
+                    cable_splits = (entity.text.lower().split(' '))  # Split cable name into words
                     for cable_split in cable_splits:
                         for x in forbidden:  # Filtering results of Cable Type
                             # print(f'{cable_split}  matching with {x}')
@@ -386,7 +392,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                                 print(f'X X X X X Cable Type Rejected {cable_split.upper()} > {x.upper()} X X X X X')
                                 cable_flag = 0
                                 break
-                        if cable_flag == 0: # if cable word is detected in forbidden list, flag = 0 and break
+                        if cable_flag == 0:  # if cable word is detected in forbidden list, flag = 0 and break
                             break
                     break
                 else:
@@ -407,7 +413,8 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                         elif (500 > len(sentence.to_plain_string()) > len(
                                 entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
                             print(f'\n= = = = = Cable Type  {cable_name.upper()} = = = = =\n')
-                            ent = entity.tag.replace('I', ' ')  # Replace insulation'I'sheath with a blank = insulation sheath
+                            ent = entity.tag.replace('I',
+                                                     ' ')  # Replace insulation'I'sheath with a blank = insulation sheath
                             sen[sentence.to_plain_string()].append(
                                 # Adding to sentence dictionary to avoid multiple same sentences
                                 f'{ent} >> {entity.text} ')
@@ -456,6 +463,8 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
         f.write(actual)
     webbrowser.open(url)
 
+
+
     if run_mode == 0:  # If single file run, ask if user wants to run another file
         print(f'\n\n\n|-----------------------------------------------------------------------------------------|')
         print(f'|_________________________________________________________________________________________|\n')
@@ -483,49 +492,48 @@ def display_menu(start, end, filename, conf):
     if start: print(f'|::::::::::::::::       Page limits      : {start} - {end}   :::::::::::::::::|')
     print(f'|______________________________________________________________________________|')
 
+
 def getFiles():
-    b=[]
+    b = []
     cursor.execute('Exec isGett')
     for row in cursor:
         b.append(row[0])
     return b
 
-def inProcess(flag,filename):
-    if flag==True:
+
+def inProcess(flag, filename):
+    if flag == True:
         storedProc = "Exec inProc @filename =?"
         params = ("BHEL_L")
         cursor.execute(storedProc, params)
         cursor.commit()
 
 
-def isGenerated(flag,filename):
-    if flag==True:
+def isGenerated(flag, filename):
+    if flag == True:
         storedProc = "Exec isGenerate @filename =?"
         params = ("BHEL_L")
         cursor.execute(storedProc, params)
         cursor.commit()
 
-def run_single_file():
-    file_name = input("\n>> Enter file name (eg. KSEB_3CX): ")
-    s_page = int(input("\n>> Enter start page (0 if you want to run all): ") or 0)
-    e_page = int(input("\n>> Enter end page (0 if you want to run all): ") or 0)
-    PDF_file = f'C:/Data/test/{file_name}.pdf'
-    thresh = float(input("\n>> Enter threshold for prediction confidence (0.0 - 1.0): ") or 0.7)
 
+def run_single_file(file_name,s_page=0, e_page=0, thresh=0.75):
+    PDF_file = f'C:/Data/test/{file_name}.pdf'
     pages = (s_page, e_page)
     display_menu(s_page, e_page, file_name, thresh)  # display main menu with variables
-    # pdfname = 'PGCIL'#PGCIL BSES TENDER EIL Specs BHEL
-    # pdf2img(PDF_file, pdfname)
-    # img_ocr(img_loc, pdfname)
-    # searchable_ocr(img_loc)  # For converting image to text embedded PDF
+
     img_loc = r'C:/Data/Output/OCR/images'
     ner(PDF_file, file_name, img_loc, 0, pages, threshold=thresh)
 
 
-
+def scheduler():
+    files = getFiles()
+    if len(files) > 0:
+        for single_file in files:
+            run_single_file(single_file)
 
 if __name__ == '__main__':
-    getFiles()
+    files = getFiles()
     print(f'\n\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
     print(f'+++/////////////////////////////////////////////////////////////////////////////+++')
