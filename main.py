@@ -1,6 +1,6 @@
 import csv
 import time
-
+import logging
 import camelot
 import os
 import pyodbc
@@ -102,20 +102,21 @@ def table_extraction(pdf, name, page, type):
             #                'boxes_flow': 1})  # Text based page
         except ZeroDivisionError:  # if (bbox_intersection_area(ba, bb) / bbox_area(ba)) > 0.8: ZeroDivisionError:
             # float division by zero
-            print('Zero Division Error')
+            logging.exception('Zero Division Error while extracting text Table')
             return None
         except IndexError:  # list index out of range:
             # index out of range
             try:
                 tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # bypass index error
-                print(f'\nSwitching to OCR extraction of Table at page {page}')
+                logging.info(f'\nSwitching to OCR extraction of Table at page {page}')
             except Exception as e:
-                print('Index Error - ' + str(e))
+                logging.exception('Index Error - ' + str(e))
                 return None
     else:
         tables, text = camelot.read_pdf(pdf, flavor='lattice_ocr', pages=str(page))  # OCR based page
     tables.export(f'C:/Data/Output/{name} tables.csv', f='txt',
                   compress=True)  # json, excel, html, markdown, sqlite, txt
+    logging.info(f'Table Export complete')
     # print(tables.export(r'C:\Data\Output\tables\table.txt', f='txt'))
     tablesfin, item, dic, header, table_line = [], '', {}, 0, []
     for table in text:
@@ -163,7 +164,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
                                      x_ths=50)
         except Exception as e:
             result = ''  # Exception occured.
-            print(e)
+            logging.exception(f'OCR encountered error: {e}')
         # paragraph=True)  # , rotation_info=[90, 180, 270], y_ths=1, x_ths=0.09, height_ths=0.5, ycenter_ths=0.5, width_ths=0.5
         cv2.startWindowThread()
         for (bbox, text) in result:  # , prob
@@ -191,7 +192,7 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         for filename in os.listdir(location):
             if filename.endswith('.png'):
                 os.remove(f'{filename}_{page}.png')
-                print(f'Deleting OCR image file {filename}_{page}.png')
+                logging.info(f'Deleting OCR image file {filename}_{page}.png')
 
         # Show the output image
         '''
@@ -201,19 +202,19 @@ def img_ocr(location, filename):  # For Image/Scanned PDF to text
         '''
     return str(total_text)
 
-
-def read_dic():
-    """
-    Read dictionary mappings for converting entity names to Normal text
-    :return: None
-    """
-    global key_mappings
-    key_mappings = {}
-    with open('./Outputs/EntityDic.text', 'r') as f:
-        for line in f:
-            key, value = line.split(',')
-            key_mappings.fromkeys(key)
-            key_mappings[key] = value
+#
+# def read_dic():
+#     """
+#     Read dictionary mappings for converting entity names to Normal text
+#     :return: None
+#     """
+#     global key_mappings
+#     key_mappings = {}
+#     with open('./Outputs/EntityDic.text', 'r') as f:
+#         for line in f:
+#             key, value = line.split(',')
+#             key_mappings.fromkeys(key)
+#             key_mappings[key] = value
 
 
 def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
@@ -228,7 +229,10 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     """
     # with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:  # To decrypt Permission pdfs
     #     pdf_f.save()
-    inProcess(True, pdf)    # Set File in_Process flag to 1 in MSSQL
+
+    logging.basicConfig(filename=f'log_{pdf}.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
+    inProcess(True, pdf)  # Set File in_Process flag to 1 in MSSQL
+    logging.info(f'{pdf} In Process flag = 1')
 
     data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
@@ -252,35 +256,44 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     ##############
     start = page_limits[0]
     end = page_limits[1]
+
     if start == 0:  # if no page range defined set last page as last page of PDF
         end = total_pages
+
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
         pagenum += 1  # To start page count from 1
         if int(start) <= pagenum <= int(end):
             interpreter.process_page(page)
             if len(retstr.getvalue()) < 50:
-                # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
-                # Page is OCR only
+                logging.warning(f'Page {pagenum + 1} is OCR only')
+
                 pdf2img(pdf, titles, pagenums=pagenum)  # Convert page to image
+                logging.info(f'Page {pagenum + 1} converted to image')
+
                 data += img_ocr(im_loc, titles)  # Get OCR from converted image
+                logging.info(f'Page {pagenum + 1} OCR data stored')
+
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')  # Run OCR based table extraction
                 except Exception as e:
+                    logging.exception(f'Error while extracting OCR Table: {e}')
                     page_tables = None
-                    print(f'Page  {pagenum} \n!!> {e} .')
                     continue
             else:
                 try:
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice')  # Returns list of tables in the specified page
                 except IndexError:
+                    logging.exception(f'Error while extracting OCR Table: {e}')
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')
                 except Exception as e:
+                    logging.exception(f'Error while extracting text Table: {e}')
                     page_tables = table_extraction(pdf, titles, pagenum,
                                                    'lattice_ocr')
-                    print(f'\nPage  {pagenum} !!> {e} .')
+                    logging.info(f'Attempting OCR Table extraction')
+
                 data += retstr.getvalue().decode('ascii',
                                                  'ignore')  # add extracted text from bytesIO to data variable
                 data = data.replace('\x0c', ' ')  # Remove useless character
@@ -323,31 +336,34 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
         retstr.truncate(0)  # Clear byte stream for new page extraction
         retstr.seek(0)
         pbar.update(1)
+        logging.info(f'Page {pagenum} Processed')
+
     pbar.close()
-    print('///////// File Read Complete //////////// ')
+    logging.info('File read complete ')
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
     for num, sentence in enumerate(tqdm(sentences, desc=f'Predicting labels . . .')):
         try:  # If page has a large diagram, catch Out of memory exception of CUDA
             tagger.predict(sentence)
         except RuntimeError:
-            print(f'Too Large page CUDA OFM error')
+            logging.critical(f'Too Large page CUDA OFM error')
             continue
+
     ##################
     #   LOG OUTPUT   #
     ##################
-    logfile = f'C:/Data/Output/{titles}_summary.rtf'
+    summary_file = f'C:/Data/Output/{titles}_summary.rtf'
     sen = {}  # Dictionary for removing duplicate sentences
     dic = {}  # Dictionary for saving output under Cable Name
     misc = {}  # Dictionary for packing and marking tags
-    with open(logfile, 'w', newline='', encoding="utf-8") as f:
+    with open(summary_file, 'w', newline='', encoding="utf-8") as f:
         f.writelines(r'{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\fs40{\f0 Rooney Sans;}}}')
-        print('\n\nWriting values to file. . . \n\n')
-        print(f'////////////////////////////////////////////////////////////////////////////////')
-        print(f'////////////////// E X T R A C T I O N    R E S U L T   ///////////////////////')
-        print(f'////////////////////////////////////////////////////////////////////////////////\n')
-        print(f'-------------------------------------------------------------------------------\n\n')
-        print(f'//  Text ,   Entity Tag ,  Confidence percentage   //\n')
+
+        logging.info('Writing values to summary file')
+        logging.info(f'////////////////////////////////////////////////////////////////////////////////')
+        logging.info(f'////////////////// E X T R A C T I O N    R E S U L T   ///////////////////////')
+        logging.info(f'////////////////////////////////////////////////////////////////////////////////\n')
+
         f.writelines(r'/////////////////////////////////////////////////////////////////////////////////////////////'
                      r'///////////////////////////////// \par')
         f.writelines(
@@ -387,13 +403,13 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
 
             for entity in sentence.get_spans('ner', min_score=0.8):
                 if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
-                    # print(f'- - - - Cable {entity.text.upper()}- - - - ')
+                    logging.info(f'Cable entity :{entity.text.upper()}')
                     cable_splits = (entity.text.lower().split(' '))  # Split cable name into words
                     for cable_split in cable_splits:
                         for x in forbidden:  # Filtering results of Cable Type
-                            # print(f'{cable_split}  matching with {x}')
+                            logging.info(f'{cable_split}  matching with {x}')
                             if cable_split.find(x) != -1 and len(cable_split) == len(x):
-                                print(f'X X X X X Cable Type Rejected {cable_split.upper()} > {x.upper()} X X X X X')
+                                logging.info(f'X Cable Type Rejected {cable_split.upper()} > {x.upper()} X')
                                 cable_flag = 0
                                 break
                         if cable_flag == 0:  # if cable word is detected in forbidden list, flag = 0 and break
@@ -411,12 +427,12 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                             misc.setdefault(entity.tag, [])
                             misc[entity.tag].append(
                                 f'{sentence.to_plain_string()}')  # Adding specific formatted line to final text file
-                            print(
+                            logging.info(
                                 f'=== {entity.text} === {entity.tag} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
                             continue
                         elif (500 > len(sentence.to_plain_string()) > len(
                                 entity.text) + 4) and entity.tag != 'marking' and entity.tag != 'packing':
-                            print(f'\n= = = = = Cable Type  {cable_name.upper()} = = = = =\n')
+                            logging.info(f'\n= = = = = Cable Type  {cable_name.upper()} = = = = =\n')
                             ent = entity.tag.replace('I',
                                                      ' ')  # Replace insulation'I'sheath with a blank = insulation sheath
                             sen[sentence.to_plain_string()].append(
@@ -424,7 +440,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                                 f'{ent} >> {entity.text} ')
                             # f.writelines(f'> {entity.text}, {entity.tag}-[{(round(entity.score, 4) * 100)}%] \n')
                             # f.writelines(f'>> {sentence.to_original_text()}, {entity.tag} \n\n')
-                            print(
+                            logging.info(
                                 f'=== {entity.text} === {ent} ::CONF:: {(round(entity.score, 4) * 100)}% :::')  # Debugging/CLI output
                 if len(sen[sentence.to_plain_string()]) > 0:  # Only add sentence to Cable dictionary if it has Entities
                     dic.setdefault(cable_name, [])  # Initialise blank value list in cable type dictionary
@@ -445,7 +461,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                     f.writelines(fr'\b {tag} \par \b0 \par')
                 f.writelines(fr' \ul Sentence \ul0: {line} \par\par')
         f.writelines(r'X----------------------------------X-----------------------------------X \par')
-        print(f'\n|___________________________________END OF FILE___________________________________________|')
+        logging.info(f'File processing complete')
 
         for k, v in misc.items():
             if len(v) > 0:
@@ -457,6 +473,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                     f.writelines(fr' \par \b Sentence {count + 1} \b0 : {tags} \par\par')
         f.writelines(r'\par X----------------------------------X-----------------------------------X \par')
         f.writelines(r'}\n\x00')
+
     colors = {
         "default": "#FF40A3",
         "O": "#ddd",
@@ -482,12 +499,16 @@ def display_menu(start, end, filename, conf):
     None
     """
 
-    print(f'-------------------------------------------------------------------------------')
-    print(f'|::::::::::::::::       Threshold Confidence : {conf}  :::::::::::::::::|')
-    print(f'|::::::::::::::::       PDF to be evaluated  : {str(filename.upper())}  :::::::::::::::::|')
-    if start: print(f'|::::::::::::::::       Page limits      : {start} - {end}   :::::::::::::::::|')
-    print(f'|______________________________________________________________________________|')
+    logging.info(f'-------------------------------------------------------------------------------')
+    logging.info(f'Threshold Confidence : {conf}')
+    logging.info(f'PDF to be evaluated  : {str(filename.upper())}')
+    if start: logging.info(f'Page limits      : {start} - {end}')
+    logging.info(f'|______________________________________________________________________________|')
 
+
+######################
+# MSSQL Integrations #
+######################
 
 def getFiles():
     b = []
@@ -513,7 +534,7 @@ def isGenerated(flag, filename):
         cursor.commit()
 
 
-def run_single_file(file_name,s_page=0, e_page=0, thresh=0.75):
+def run_single_file(file_name, s_page=0, e_page=0, thresh=0.75):
     PDF_file = f'C:/Data/test/{file_name}.pdf'
     pages = (s_page, e_page)
     display_menu(s_page, e_page, file_name, thresh)  # display main menu with variables
@@ -524,11 +545,12 @@ def run_single_file(file_name,s_page=0, e_page=0, thresh=0.75):
 
 def file_check_schedule():
     files = getFiles()
-    print(f'Files in pipeline {" ".join(files)}\n')
+    logging.info(f'Files in pipeline {" ".join(files)}\n')
     if len(files) > 0:
         for single_file in files:
-            print(f'File to be run {single_file}')
+            logging.info(f'File to be run {single_file}')
             run_single_file(single_file)
+
 
 if __name__ == '__main__':
     schedule.every(10).seconds.do(file_check_schedule)
@@ -542,7 +564,6 @@ if __name__ == '__main__':
             # sleep exactly the right amount of time
             time.sleep(n)
         schedule.run_pending()
-
 
 """
 CLI command :
