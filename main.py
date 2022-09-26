@@ -40,15 +40,7 @@ warnings.filterwarnings("ignore")
 # ONLY FOR DEMO USE #
 #####################
 
-
-connection_string = ("Driver={SQL Server Native Client 11.0};"
-                     "Server=SFA-DEV\SFADEVNEW;"
-                     "Database=DB_IDP;"
-                     "UID=App_User_IDP;"
-                     "PWD=Havells@123;")
-connection = pyodbc.connect(connection_string)
-
-cursor = connection.cursor()
+logging.basicConfig(filename='IDP_run.log', filemode='a', format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
 def pdf2img(pdf, name, pagenums=None):
@@ -230,9 +222,8 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     # with Pdf.open(pdf, allow_overwriting_input=True) as pdf_f:  # To decrypt Permission pdfs
     #     pdf_f.save()
 
-    logging.basicConfig(filename=f'log_{pdf}.log', filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
-    inProcess(True, pdf)  # Set File in_Process flag to 1 in MSSQL
-    logging.info(f'{pdf} In Process flag = 1')
+    inProcess(True, titles)  # Set File in_Process flag to 1 in MSSQL
+    logging.info(f'{titles} In Process flag = 1')
 
     data = ''  # Data string variable to save all text data of PDF
     tagger = SequenceTagger.load(
@@ -250,7 +241,6 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     parser = PDFParser(fp)  # For getting total pages
     document = PDFDocument(parser)  # For getting total pages
     total_pages = resolve1(document.catalog['Pages'])['Count']  # For making progress bar
-    pbar = tqdm(total=total_pages, desc='Reading PDF')
     ##############
     # Prediction #
     ##############
@@ -335,10 +325,8 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
             '''
         retstr.truncate(0)  # Clear byte stream for new page extraction
         retstr.seek(0)
-        pbar.update(1)
         logging.info(f'Page {pagenum} Processed')
 
-    pbar.close()
     logging.info('File read complete ')
     splitter = SegtokSentenceSplitter()
     sentences = splitter.split(data)
@@ -483,7 +471,7 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
         url = 'file://' + f.name
         f.write(actual)
     webbrowser.open(url)
-    isGenerated(True, pdf)
+    isGenerated(True, titles)
 
 
 def display_menu(start, end, filename, conf):
@@ -511,28 +499,58 @@ def display_menu(start, end, filename, conf):
 ######################
 
 def getFiles():
+    connection_string = ("Driver={SQL Server Native Client 11.0};"
+                         "Server=SFA-DEV\SFADEVNEW;"
+                         "Database=DB_IDP;"
+                         "UID=App_User_IDP;"
+                         "PWD=Havells@123;")
+    connection = pyodbc.connect(connection_string)
+
+    cursor = connection.cursor()
+
     b = []
     cursor.execute('Exec isGett')
     for row in cursor:
         b.append(row[0])
+    cursor.close()
     return b
 
 
 def inProcess(flag, filename):
+
+    connection_string = ("Driver={SQL Server Native Client 11.0};"
+                         "Server=SFA-DEV\SFADEVNEW;"
+                         "Database=DB_IDP;"
+                         "UID=App_User_IDP;"
+                         "PWD=Havells@123;")
+    connection = pyodbc.connect(connection_string)
+
+    cursor = connection.cursor()
+
     if flag == True:
         storedProc = "Exec inProc @filename =?"
-        params = (filename)
+        params = (filename.upper())
         cursor.execute(storedProc, params)
         cursor.commit()
-
+    cursor.close()
 
 def isGenerated(flag, filename):
+
+    connection_string = ("Driver={SQL Server Native Client 11.0};"
+                         "Server=SFA-DEV\SFADEVNEW;"
+                         "Database=DB_IDP;"
+                         "UID=App_User_IDP;"
+                         "PWD=Havells@123;")
+    connection = pyodbc.connect(connection_string)
+
+    cursor = connection.cursor()
+
     if flag == True:
         storedProc = "Exec isGenerate @filename =?"
-        params = (filename)
+        params = (filename.upper())
         cursor.execute(storedProc, params)
         cursor.commit()
-
+    cursor.close()
 
 def run_single_file(file_name, s_page=0, e_page=0, thresh=0.75):
     PDF_file = f'C:/Data/test/{file_name}.pdf'
