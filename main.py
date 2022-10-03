@@ -352,8 +352,8 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
         for sentence in sentences:
             sen.setdefault(sentence.to_plain_string(),
                            [])  # Create list initialised dictionary where Key = sentence
-            for entity in sentence.get_spans('ner', min_score=0.8):
-                if str(entity.tag) == 'cableItype':
+            for entity in sentence.get_spans('ner', min_score=threshold):
+                if str(entity.tag) == 'cableItype' and entity.score > 0.8:
                     for y in cable_list:
                         if entity.text.lower().find(y) != -1 and len(entity) > 1:
                             cable_flag = 1
@@ -362,23 +362,15 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
                     continue
                 else:
                     continue
-
-            for entity in sentence.get_spans('ner', min_score=0.8):
-                if str(entity.tag) == 'cableItype':  # Check all entities if in Forbidden list
-                    # print(f'- - - - Cable {entity.text.upper()}- - - - ')
-                    cable_splits = (entity.text.lower().split(' ')) # Split cable name into words
-                    for cable_split in cable_splits:
-                        for x in forbidden:  # Filtering results of Cable Type
-                            # print(f'{cable_split}  matching with {x}')
-                            if cable_split.find(x) != -1 and len(cable_split) == len(x):
-                                print(f'X X X X X Cable Type Rejected {cable_split.upper()} > {x.upper()} X X X X X')
-                                cable_flag = 0
-                                break
-                        if cable_flag == 0: # if cable word is detected in forbidden list, flag = 0 and break
+            for entity in sentence.get_spans('ner', min_score=threshold):
+                if str(entity.tag) == 'cableItype' and entity.score > 0.8:  # Check all entities if in Forbidden list
+                    # print(f'\n- - - - Cable {entity.text.upper()}- - - - ')
+                    for x in forbidden:  # Filtering results of Cable Type
+                        if entity.text.lower().find(x) != -1 and len(entity.text) == len(x):
+                            print(f'X X X X X Cable Type Rejected {entity.text.upper()} > {x.upper()} X X X X X')
+                            cable_flag = 0
                             break
                     break
-                else:
-                    continue
             if cable_flag == 1 and cable_name is not None:  # If cable is present in sentence
 
                 for entity in sentence.get_spans('ner', min_score=threshold):
