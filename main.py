@@ -235,7 +235,11 @@ def ner(pdf, titles, im_loc, run_mode=0, page_limits=(0, 0), threshold=0.75):
     for pagenum, page in enumerate(pdfpage.PDFPage.get_pages(fp, check_extractable=True)):
         pagenum += 1  # To start page count from 1
         if int(start) <= pagenum <= int(end):
-            interpreter.process_page(page)
+            try:
+                interpreter.process_page(page)
+            except KeyError:
+                print(f'Key Error at page {pagenum} skipping page.')
+                continue
             if len(retstr.getvalue()) < 50:
                 # print(f'>> OCR PAGE >>{retstr.getvalue()} <<<<<<< Page number: {pagenum + 1}<<<<< ! ! ! ')
                 # Page is OCR only
