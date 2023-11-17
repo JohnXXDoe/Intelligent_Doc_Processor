@@ -180,6 +180,15 @@ After the addition of table detection this project will be able to keep data int
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+<!-- CHANGELOG -->
+## Changelog
+> Added integration with SQL to ingest files in a queue with a priority ranking and update current file status (In progress, processing done, results uploaded)
+> Create a central filesystem to store final outputs and link with SQL table to update front end.
+> Integrate system with a frontend to allow users to upload files and check results.
+
+Future roadmap:
+> Change core summary creation logic, to be moved from Cable name format to heading indexed format which is more universal and better for rejections
+> Remove any detected tables from regular NER input to reduce false positives
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -213,7 +222,7 @@ To be added.
 
 Utkarsh Kharayat - utkarshk.co.16@nsit.ac.in
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/JohnXXDoe/Doc_IMG-OCR/)
+Project Link: [JohnXXDoe](https://github.com/JohnXXDoe/Doc_IMG-OCR/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
